@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>S/P Calculator</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="S/P Calc">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144.png">
+<link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192-any.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512-any.png">
+<meta name="description" content="ICU Syringe Pump Drug Dose & Infusion Calculator by Dr. Mottaqir Mamun">
+<meta name="application-name" content="S/P Calculator">
+<style>
+ :root {
+ --bg: #0a0f1e;
+ --text: #e2e8f0;
+ --text-strong: #f1f5f9;
+ --text-muted: #94a3b8;
+ --text-faint: #64748b;
+ --text-fainter: #475569;
+ --surface: #111827;
+ --surface-deep: #0f172a;
+ --surface-input: #1e293b;
+ --border: #1e293b;
+ --border-strong: #334155;
+ --border-accent: #1e3a5f;
+ --tab-bg: #1e293b;
+ --tab-active-bg: #1e40af;
+ --tab-active-text: #fff;
+ --footer-text: #334155;
+ --footer-name: #ffffff;
+ --h1-from: #60a5fa;
+ --h1-to: #a78bfa;
+ }
+ [data-theme="light"] {
+ --bg: #f4f6fb;
+ --text: #1e293b;
+ --text-strong: #0f172a;
+ --text-muted: #374151;
+ --text-faint: #374151;
+ --text-fainter: #6b7280;
+ --surface: #ffffff;
+ --surface-deep: #eef1f8;
+ --surface-input: #eef1f8;
+ --border: #dde3ee;
+ --border-strong: #c7d0e0;
+ --border-accent: #c7d6f0;
+ --tab-bg: #e2e5ed;
+ --tab-active-bg: #374151;
+ --tab-active-text: #fff;
+ --footer-text: #6b7280;
+ --footer-name: #111827;
+ --h1-from: #1d4ed8;
+ --h1-to: #1d4ed8;
+ }
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Arial, sans-serif; padding: 12px; min-height: 100vh; transition: background 0.2s, color 0.2s; }
+ .header { text-align: center; margin-bottom: 16px; }
+ .header h1 { font-size: clamp(13px, 5.2vw, 22px); font-weight: 800; letter-spacing: -0.3px; background: linear-gradient(135deg, var(--h1-from), var(--h1-to)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
+ .weight-box { background: var(--surface); border: 1px solid var(--border-accent); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+ .weight-box-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+ .weight-box label { font-size: 12px; color: #60a5fa; font-weight: 600; white-space: nowrap; }
+ .weight-box input[type=range] { flex: 1; accent-color: #60a5fa; }
+ .wt-editable { font-size: 20px; font-weight: 800; color: #60a5fa; background: var(--surface-input); border: 1px solid var(--border-strong); border-radius: 6px; width: 65px; text-align: center; outline: none; font-family: inherit; padding: 2px; }
+ .wt-editable:focus { border-color: #60a5fa; }
+ .wt-kg { font-size: 11px; color: var(--text-faint); margin-left: 2px; }
+ .weight-formula { font-size: 9.5px; color: var(--text-fainter); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.2px; }
+ .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+ .tab-btn { padding: 7px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 11.5px; font-weight: 600; background: var(--tab-bg); color: var(--text-faint); transition: all 0.2s; text-align: center; width: 100%; }
+ .tab-btn.active { background: var(--tab-active-bg); color: var(--tab-active-text); }
+ .tab-content { display: none; }
+ .tab-content.active { display: block; }
+ .cat-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; padding-left: 10px; border-left: 3px solid currentColor; }
+ .cat-block { margin-bottom: 18px; }
+ .drug-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; transition: border-color 0.2s; }
+ .drug-card.open { border-color: var(--cat-color, #60a5fa); }
+ .drug-header { padding: 11px 13px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; }
+ .drug-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+ .drug-name { font-weight: 700; font-size: 14px; color: var(--text-strong); }
+ .brand-name { font-family: 'Times New Roman', Times, serif !important; font-weight: 400 !important; font-style: normal !important; font-size: 0.93em; }
+ .drug-dilution { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+ .drug-rate-preview { text-align: right; }
+ .drug-rate-preview .rate-num { font-size: 22px; font-weight: 800; }
+ .drug-rate-preview .rate-unit { font-size: 10px; color: var(--text-faint); }
+ .drug-body { padding: 0 13px 13px; border-top: 1px solid var(--border); display: none; }
+ .drug-card.open .drug-body { display: block; }
+ .dose-row { padding-top: 10px; }
+ .dose-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
+ .dose-val { font-weight: 700; font-size: 13px; }
+ .range-limits { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-fainter); margin-top: 2px; }
+ input[type=range] { width: 100%; }
+ .result-box { background: var(--surface-deep); border-radius: 8px; padding: 10px 12px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+ .result-box .label { font-size: 11px; color: var(--text-faint); }
+ .result-big { font-size: 28px; font-weight: 900; }
+ .result-unit { font-size: 12px; color: var(--text-muted); margin-left: 3px; }
+ .note-box { margin-top: 8px; font-size: 11px; color: var(--text-muted); background: var(--surface-deep); border-radius: 6px; padding: 8px 10px; line-height: 1.5; }
+ .bolus-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+ .bolus-header { padding: 11px 13px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px; }
+ .bolus-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; background: var(--text-muted); }
+ .bolus-body { padding: 0 13px 13px; border-top: 1px solid var(--border); display: none; }
+ .bolus-card.open .bolus-body { display: block; }
+ .meta-row { display: flex; gap: 8px; margin-top: 8px; }
+ .meta-box { flex: 1; background: var(--surface-deep); border-radius: 6px; padding: 6px 8px; }
+ .meta-box .ml { font-size: 10px; color: var(--text-faint); }
+ .meta-box .mv { font-size: 12px; font-weight: 600; color: var(--text); }
+ .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+ .calc-title { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; display: flex; align-items: flex-start; gap: 8px; }
+ .calc-title-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: var(--text-muted); margin-top: 5px; align-self: flex-start; }
+ .calc-body { padding: 12px 14px; }
+ .field-row { margin-bottom: 10px; }
+ .field-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+ .field-inputs { display: flex; gap: 8px; align-items: center; }
+ .field-inputs input[type=range] { flex: 1; }
+ .field-inputs input[type=number] { width: 62px; background: var(--surface-input); border: 1px solid var(--border-strong); border-radius: 6px; color: var(--text); padding: 4px 6px; font-size: 13px; text-align: center; }
+ .calc-result { background: var(--surface-deep); border-radius: 8px; padding: 10px 12px; margin-top: 6px; }
+ .calc-result .cr-main { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+ .calc-result .cr-detail { font-size: 11px; color: var(--text-faint); line-height: 1.5; }
+ .defib-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; padding: 11px 13px; display: flex; align-items: flex-start; gap: 10px; }
+ .defib-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; background: var(--text-muted); }
+ .badge { padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+ .badge-defib { background: #7f1d1d; color: #fca5a5; }
+ .badge-sync { background: #1e3a5f; color: #93c5fd; }
+ .defib-rhythm { font-weight: 700; font-size: 13px; color: var(--text-strong); white-space: nowrap; }
+ .defib-sync { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+ .defib-energy { font-size: 14px; font-weight: 800; text-align: right; }
+ .gtn-table { margin-top: 4px; }
+ .gtn-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+ .gtn-dose { color: var(--text-muted); }
+ .gtn-rate { color: #f59e0b; font-weight: 600; }
+
+ /* ── Light theme overrides ── */
+ [data-theme="light"] .header h1 { background: none; -webkit-background-clip: unset; -webkit-text-fill-color: #111827; }
+ /* Weight box: navy blue label & slider */
+ [data-theme="light"] .weight-box label { color: #1e3a8a !important; }
+ [data-theme="light"] .wt-editable { color: #1e3a8a !important; border-color: #1e3a8a !important; }
+ [data-theme="light"] .weight-box input[type=range] { accent-color: #374151 !important; }
+ /* Tabs: inactive gray text, active = dark gray bg + bright white text */
+ [data-theme="light"] .tab-btn { color: #374151; font-weight: 600; }
+ [data-theme="light"] .tab-btn.active { background: #374151 !important; color: #ffffff !important; }
+ /* Rate numbers (right side of card) → BLACK */
+ [data-theme="light"] .rate-num { color: #111827 !important; }
+ [data-theme="light"] .result-big { color: #111827 !important; }
+ [data-theme="light"] .dose-val { color: #1e3a8a !important; }
+ [data-theme="light"] .cr-main { color: #1e3a8a !important; }
+ /* Category labels & left border: navy blue */
+ [data-theme="light"] .cat-label { color: #1e3a8a !important; border-left-color: #1e3a8a !important; }
+ [data-theme="light"] .drug-dot { background: #1e3a8a !important; }
+ [data-theme="light"] .bolus-dot { background: #1e3a8a !important; }
+ [data-theme="light"] .calc-title-dot { background: #1e3a8a !important; }
+ [data-theme="light"] .defib-dot { background: #1e3a8a !important; }
+ [data-theme="light"] .drug-card.open { border-color: #374151 !important; }
+ [data-theme="light"] .calc-title { color: #111827 !important; }
+ /* All sliders: dark gray */
+ [data-theme="light"] input[type=range] { accent-color: #374151 !important; }
+ /* Warning note boxes: red outline only, no fill */
+ [data-theme="light"] .note-box { background: transparent !important; border: 1px solid #ef4444 !important; color: #374151 !important; }
+ /* Defib badges */
+ [data-theme="light"] .badge-sync { background: #374151 !important; color: #fff !important; }
+ [data-theme="light"] .defib-energy { color: #111827 !important; }
+ [data-theme="light"] .gtn-rate { color: #111827 !important; }
+ [data-theme="light"] strong[style*="f59e0b"] { color: #1e3a8a !important; }
+ [data-theme="light"] .adenosine-title,
+ [data-theme="light"] .gtn-title { color: #111827 !important; }
+
+ /* ── Footer ── */
+ .footer { margin-top: 22px; font-size: 10px; color: var(--footer-text); }
+ .footer-inner { display: flex; align-items: center; }
+ .footer-pipe-wrap { display: none; }
+ .footer-pipe { display: none; }
+ .footer-lines { flex: 1; line-height: 1.72; }
+ .footer-ref-sep { font-weight: 700; color: var(--footer-text); }
+ [data-theme="light"] .footer-ref-sep { color: #111; }
+ .footer-dot { font-weight: 700; color: var(--footer-text); margin: 0 4px; }
+ [data-theme="light"] .footer-dot { color: #111; }
+ /* Toggle: rounded-corner square, stretches to full 2-line height */
+ .footer-toggle-wrap { display: flex; align-items: stretch; padding-left: 8px; }
+ .theme-toggle {
+   display: flex; align-items: center; justify-content: center;
+   width: 34px; height: 34px;
+   border-radius: 50%; background: var(--surface);
+   border: 1px solid var(--border-strong); cursor: pointer;
+   flex-shrink: 0; transition: background 0.2s;
+ }
+ .theme-toggle svg { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<div class="header">
+ <h1>Syringe Pump dose Calculator for ICU</h1>
+</div>
+
+<div class="weight-box">
+ <div class="weight-box-top">
+ <label>Patient Weight</label>
+ <input type="range" id="globalWt" min="30" max="120" step="1" value="60" oninput="syncWt(this.value)">
+ <input type="number" class="wt-editable" id="globalWtNum" min="30" max="120" value="60" oninput="syncWt(this.value)">
+ <span class="wt-kg">kg</span>
+ </div>
+ <div class="weight-formula">Formula: ml/hr = (Dose &times; Weight &times; 60) &divide; Concentration</div>
+</div>
+
+<div class="tabs">
+ <button class="tab-btn active" onclick="showTab('bolus',this)">Bolus Drugs</button>
+ <button class="tab-btn" onclick="showTab('infusion',this)">Infusion Drugs</button>
+ <button class="tab-btn" onclick="showTab('special',this)">Special Calc</button>
+ <button class="tab-btn" onclick="showTab('defib',this)">Defib / Cardio</button>
+</div>
+
+<div id="tab-infusion" class="tab-content">
+ <div class="cat-block">
+ <div class="cat-label" style="color:#ef4444">Vasopressors &amp; Inotropes</div>
+ <div class="drug-card" style="--cat-color:#ef4444" id="card-nora">
+ <div class="drug-header" onclick="toggleCard('nora')">
+ <div class="drug-dot" style="background:#ef4444"></div>
+ <div style="flex:1"><div class="drug-name">Noradrenaline</div><div class="drug-dilution">8mg + 5% DA &rarr; 50ml<br>Conc: 160mcg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#ef4444" id="rate-nora">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#ef4444"><span id="dv-nora">0.100</span> mcg/kg/min</span></div>
+ <input type="range" id="range-nora" min="0.025" max="0.35" step="0.025" value="0.1" oninput="calcInfusion('nora',this.value,60,160,'mcg/kg/min')" style="accent-color:#ef4444">
+ <div class="range-limits"><span>0.025</span><span>0.35</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #ef444440"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#ef4444" id="res-nora">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">&#9888;&#65039; Do NOT use NS &mdash; unstable in normal saline</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#ef4444" id="card-vaso">
+ <div class="drug-header" onclick="toggleCard('vaso')">
+ <div class="drug-dot" style="background:#ef4444"></div>
+ <div style="flex:1"><div class="drug-name">Vasopressin</div><div class="drug-dilution">1 ampule (20units) + 50ml NS &rarr; 50ml<br>Conc: 0.4units/ml | NOT weight-based</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#ef4444" id="rate-vaso">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#ef4444"><span id="dv-vaso">0.02</span> units/min</span></div>
+ <input type="range" id="range-vaso" min="0.01" max="0.04" step="0.01" value="0.02" oninput="calcVaso(this.value)" style="accent-color:#ef4444">
+ <div class="range-limits"><span>0.01</span><span>0.04</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #ef444440"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#ef4444" id="res-vaso">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">Fixed dose — NOT titrated to effect like catecholamines | Used as add-on to Noradrenaline in refractory shock | Max: 0.04units/min | ⚠️ Verify dilution/dose against your unit protocol — chart not available at entry time</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#ef4444" id="card-adren">
+ <div class="drug-header" onclick="toggleCard('adren')">
+ <div class="drug-dot" style="background:#ef4444"></div>
+ <div style="flex:1"><div class="drug-name">Adrenaline</div><div class="drug-dilution">8 amp [8mg] + 42ml NS &rarr; 50ml<br>Conc: 160mcg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#ef4444" id="rate-adren">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#ef4444"><span id="dv-adren">0.10</span> mcg/kg/min</span></div>
+ <input type="range" id="range-adren" min="0.1" max="1.0" step="0.1" value="0.1" oninput="calcInfusion('adren',this.value,60,160,'mcg/kg/min')" style="accent-color:#ef4444">
+ <div class="range-limits"><span>0.1</span><span>1.0</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #ef444440"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#ef4444" id="res-adren">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">Arrest: 10ml push in seconds | Anaphylaxis WMCCM: 1 min | Anaphylaxis OHCM: 10 min</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#ef4444" id="card-dopa">
+ <div class="drug-header" onclick="toggleCard('dopa')">
+ <div class="drug-dot" style="background:#ef4444"></div>
+ <div style="flex:1"><div class="drug-name">Dopamine</div><div class="drug-dilution">2 amp + 40ml NS &rarr; 50ml (400mg)<br>Conc: 8000mcg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#ef4444" id="rate-dopa">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#ef4444"><span id="dv-dopa">5</span> mcg/kg/min</span></div>
+ <input type="range" id="range-dopa" min="2" max="20" step="1" value="5" oninput="calcInfusion('dopa',this.value,60,8000,'mcg/kg/min')" style="accent-color:#ef4444">
+ <div class="range-limits"><span>2</span><span>20</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #ef444440"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#ef4444" id="res-dopa">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">1 amp = 5ml = 200mg</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#ef4444" id="card-dobu">
+ <div class="drug-header" onclick="toggleCard('dobu')">
+ <div class="drug-dot" style="background:#ef4444"></div>
+ <div style="flex:1"><div class="drug-name">Dobutamine</div><div class="drug-dilution">2 amp + 40ml NS &rarr; 50ml (500mg)<br>Conc: 10000mcg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#ef4444" id="rate-dobu">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#ef4444"><span id="dv-dobu">5</span> mcg/kg/min</span></div>
+ <input type="range" id="range-dobu" min="5" max="20" step="1" value="5" oninput="calcInfusion('dobu',this.value,60,10000,'mcg/kg/min')" style="accent-color:#ef4444">
+ <div class="range-limits"><span>5</span><span>20</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #ef444440"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#ef4444" id="res-dobu">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">1 amp = 5ml = 250mg</div>
+ </div>
+ </div>
+ </div>
+
+ <div class="cat-block">
+ <div class="cat-label" style="color:#8b5cf6">Sedation &amp; Analgesia</div>
+ <div class="drug-card" style="--cat-color:#8b5cf6" id="card-fent">
+ <div class="drug-header" onclick="toggleCard('fent')">
+ <div class="drug-dot" style="background:#8b5cf6"></div>
+ <div style="flex:1"><div class="drug-name">Fentanyl</div><div class="drug-dilution">5 amp + 40ml NS &rarr; 50ml (500mcg)<br>Conc: 10mcg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#8b5cf6" id="rate-fent">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#8b5cf6"><span id="dv-fent">1</span> mcg/kg/hr</span></div>
+ <input type="range" id="range-fent" min="1" max="10" step="1" value="1" oninput="calcInfusion('fent',this.value,1,10,'mcg/kg/hr')" style="accent-color:#8b5cf6">
+ <div class="range-limits"><span>1</span><span>10</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #8b5cf640"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#8b5cf6" id="res-fent">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">Bolus: 1mcg/kg (0.3&ndash;1.5) | Onset 2-5min | Duration 30-60min | 1 amp = 2ml = 100mcg</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#8b5cf6" id="card-dex">
+ <div class="drug-header" onclick="toggleCard('dex')">
+ <div class="drug-dot" style="background:#8b5cf6"></div>
+ <div style="flex:1"><div class="drug-name">Dexmedetomidine</div><div class="drug-dilution">1 amp (2ml=2mg) + 48ml NS &rarr; 50ml<br>Conc: 4mcg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#8b5cf6" id="rate-dex">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#8b5cf6"><span id="dv-dex">0.4</span> mcg/kg/hr</span></div>
+ <input type="range" id="range-dex" min="0.2" max="0.7" step="0.1" value="0.4" oninput="calcInfusion('dex',this.value,1,4,'mcg/kg/hr')" style="accent-color:#8b5cf6">
+ <div class="range-limits"><span>0.2</span><span>0.7</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #8b5cf640"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#8b5cf6" id="res-dex">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">Loading: 1mcg/kg over 10 min | Then 0.2&ndash;0.7mcg/kg/hr maintenance</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#8b5cf6" id="card-prop">
+ <div class="drug-header" onclick="toggleCard('prop')">
+ <div class="drug-dot" style="background:#8b5cf6"></div>
+ <div style="flex:1"><div class="drug-name">Propofol</div><div class="drug-dilution">Neat (10mg/ml) — no dilution needed<br>Conc: 10mg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#8b5cf6" id="rate-prop">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#8b5cf6"><span id="dv-prop">1.0</span> mg/kg/hr</span></div>
+ <input type="range" id="range-prop" min="0.5" max="4" step="0.5" value="1" oninput="calcInfusion('prop',this.value,1,10,'mg/kg/hr')" style="accent-color:#8b5cf6">
+ <div class="range-limits"><span>0.5</span><span>4.0</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #8b5cf640"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#8b5cf6" id="res-prop">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">Range: 0.5–4mg/kg/hr | Check triglycerides if &gt;48hr | Propofol infusion syndrome risk &gt;4mg/kg/hr | 1 vial = 200ml = 2000mg</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#8b5cf6" id="card-midaz">
+ <div class="drug-header" onclick="toggleCard('midaz')">
+ <div class="drug-dot" style="background:#8b5cf6"></div>
+ <div style="flex:1"><div class="drug-name">Midazolam</div><div class="drug-dilution">15mg (1 amp 3ml) + 47ml NS &rarr; 50ml<br>Conc: 0.3mg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#8b5cf6" id="rate-midaz">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#8b5cf6"><span id="dv-midaz">0.05</span> mg/kg/hr</span></div>
+ <input type="range" id="range-midaz" min="0.02" max="0.2" step="0.01" value="0.05" oninput="calcInfusion('midaz',this.value,1,0.3,'mg/kg/hr')" style="accent-color:#8b5cf6">
+ <div class="range-limits"><span>0.02</span><span>0.2</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #8b5cf640"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#8b5cf6" id="res-midaz">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">Range: 0.02–0.2mg/kg/hr | Titrate to RASS −1 to −2 | Bolus: 0.02–0.1mg/kg slow IV | 1 amp = 3ml = 15mg</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#8b5cf6" id="card-midmor">
+ <div class="drug-header" onclick="toggleCard('midmor')">
+ <div class="drug-dot" style="background:#8b5cf6"></div>
+ <div style="flex:1"><div class="drug-name">Midazolam + Morphine</div><div class="drug-dilution">2 amp Morphine (20mg) + 2 amp Midazolam (30mg) + 22ml NS &rarr; 30ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#8b5cf6" id="rate-midmor">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Rate</span><span class="dose-val" style="color:#8b5cf6"><span id="dv-midmor">2</span> ml/hr</span></div>
+ <input type="range" id="range-midmor" min="1" max="10" step="1" value="2" oninput="calcFixed('midmor',this.value)" style="accent-color:#8b5cf6">
+ <div class="range-limits"><span>1</span><span>10</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #8b5cf640"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#8b5cf6" id="res-midmor">2</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">1ml = 1mg Morphine (Conc: 1mg/ml) + 1mg Midazolam (Conc: 1mg/ml) | Rate ml/hr directly</div>
+ </div>
+ </div>
+ <div class="cat-block">
+ <div class="cat-label" style="color:#f59e0b">Cardiac &amp; Anti-arrhythmic</div>
+ <div class="drug-card" style="--cat-color:#f59e0b" id="card-labet">
+ <div class="drug-header" onclick="toggleCard('labet')">
+ <div class="drug-dot" style="background:#f59e0b"></div>
+ <div style="flex:1"><div class="drug-name">Labetalol</div><div class="drug-dilution">2 amp + 30ml 5% DA &rarr; 50ml (100mg)<br>Conc: 2mg/ml = 2000mcg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#f59e0b" id="rate-labet">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#f59e0b"><span id="dv-labet">10</span> mcg/kg/min</span></div>
+ <input type="range" id="range-labet" min="2.5" max="30" step="2.5" value="10" oninput="calcInfusion('labet',this.value,60,2000,'mcg/kg/min')" style="accent-color:#f59e0b">
+ <div class="range-limits"><span>2.5</span><span>30</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #f59e0b40"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#f59e0b" id="res-labet">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">Bolus: 1 amp over 10min | Onset 5-10min | Duration 3-6hr | 1 amp = 10ml = 50mg</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#f59e0b" id="card-gtn">
+ <div class="drug-header" onclick="toggleCard('gtn')">
+ <div class="drug-dot" style="background:#f59e0b"></div>
+ <div style="flex:1"><div class="drug-name">GTN <span class="brand-name">(Glyceryl Trinitrate)</span></div><div class="drug-dilution">1 amp + 40ml NS &rarr; 50ml (50mg)<br>Conc: 1000mcg/ml | NOT weight-based</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#f59e0b" id="rate-gtn">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#f59e0b"><span id="dv-gtn">30</span> mcg/min</span></div>
+ <input type="range" id="range-gtn" min="10" max="200" step="10" value="30" oninput="calcGTN(this.value)" style="accent-color:#f59e0b">
+ <div class="range-limits"><span>10</span><span>200</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #f59e0b40"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#f59e0b" id="res-gtn">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">1 amp = 10ml = 50mg | Formula: (dose &times; 60) &divide; 1000</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#f59e0b" id="card-amio">
+ <div class="drug-header" onclick="toggleCard('amio')">
+ <div class="drug-dot" style="background:#f59e0b"></div>
+ <div style="flex:1"><div class="drug-name">Amiodarone <span class="brand-name">(Maintenance)</span></div><div class="drug-dilution">6 amp + 12ml 5% DA &rarr; 30ml (900mg)<br>Conc: 30mg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#f59e0b" id="rate-amio">2</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="result-box" style="border:1px solid #f59e0b40; margin-top:10px">
+ <div class="label">Fixed Protocol</div>
+ <div style="text-align:right; font-size:13px; color:#f59e0b; font-weight:700; line-height:1.8">360mg &rarr; 2ml/hr &times; 6 hrs<br>540mg &rarr; 1ml/hr &times; 18 hrs</div>
+ </div>
+ <div class="note-box">6 amp + 12ml 5% DA = 30ml = 900mg | 1 amp = 3ml = 150mg | Use 5% DA only<br><strong>N.B.</strong> Check BP &amp; HR carefully. Stop if BP low or HR &le; 75 bpm.</div>
+ </div>
+ </div>
+ </div>
+
+ <div class="cat-block">
+ <div class="cat-label" style="color:#10b981">Electrolytes &amp; Special Infusions</div>
+ <div class="drug-card" style="--cat-color:#10b981" id="card-kcl">
+ <div class="drug-header" onclick="toggleCard('kcl')">
+ <div class="drug-dot" style="background:#10b981"></div>
+ <div style="flex:1"><div class="drug-name">KT <span class="brand-name">(KCl)</span> &mdash; CV Line</div><div class="drug-dilution">25ml KT + 25ml NS &rarr; 50ml<br>Conc: 1mmol/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#10b981" id="rate-kcl">10</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Rate</span><span class="dose-val" style="color:#10b981"><span id="dv-kcl">10</span> mmol/hr</span></div>
+ <input type="range" id="range-kcl" min="5" max="20" step="5" value="10" oninput="calcFixed('kcl',this.value)" style="accent-color:#10b981">
+ <div class="range-limits"><span>5</span><span>20 (max)</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #10b98140"><div class="label">Syringe Pump Rate (= mmol/hr)</div><div><span class="result-big" style="color:#10b981" id="res-kcl">10</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">&#9888;&#65039; Central line ONLY | Max 20mmol/hr | 1 amp = 10ml = 20mmol</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#10b981" id="card-ins">
+ <div class="drug-header" onclick="toggleCard('ins')">
+ <div class="drug-dot" style="background:#10b981"></div>
+ <div style="flex:1"><div class="drug-name" style="font-size:12px">Actrapid <span class="brand-name">100 IU/ml (Human Insulin R)</span></div><div class="drug-dilution">50units in 50ml NS<br>Conc: 1unit/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#10b981" id="rate-ins">2</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Rate</span><span class="dose-val" style="color:#10b981"><span id="dv-ins">2</span> units/hr</span></div>
+ <input type="range" id="range-ins" min="1" max="10" step="1" value="2" oninput="calcFixed('ins',this.value)" style="accent-color:#10b981">
+ <div class="range-limits"><span>1</span><span>10</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #10b98140"><div class="label">Rate (ml/hr = units/hr)</div><div><span class="result-big" style="color:#10b981" id="res-ins">2</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">1ml = 1unit | Rate ml/hr = units/hr directly<br><strong>N.B.</strong> If CBG &le; 8mmol/L &rarr; give 4units S/C bolus, then stop IV infusion after 20 min.</div>
+ </div>
+ </div>
+ <div class="drug-card" style="--cat-color:#10b981" id="card-lasix">
+ <div class="drug-header" onclick="toggleCard('lasix')">
+ <div class="drug-dot" style="background:#10b981"></div>
+ <div style="flex:1"><div class="drug-name">Lasix <span class="brand-name">(Furosemide)</span></div><div class="drug-dilution">5 amp + 40ml NS &rarr; 50ml (100mg)<br>Conc: 2mg/ml</div></div>
+ <div class="drug-rate-preview"><div class="rate-num" style="color:#10b981" id="rate-lasix">&mdash;</div><div class="rate-unit">ml/hr</div></div>
+ </div>
+ <div class="drug-body">
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#10b981"><span id="dv-lasix">4</span> mg/hr</span></div>
+ <input type="range" id="range-lasix" min="2" max="20" step="2" value="4" oninput="calcLasix(this.value)" style="accent-color:#10b981">
+ <div class="range-limits"><span>2</span><span>20</span></div>
+ </div>
+ <div class="result-box" style="border:1px solid #10b98140"><div class="label">Syringe Pump Rate</div><div><span class="result-big" style="color:#10b981" id="res-lasix">&mdash;</span><span class="result-unit">ml/hr</span></div></div>
+ <div class="note-box">1 amp = 2ml = 20mg</div>
+ </div>
+ </div>
+ </div>
+ </div>
+</div>
+
+<div id="tab-bolus" class="tab-content active">
+ <div id="bolus-list"></div>
+</div>
+
+<div id="tab-special" class="tab-content">
+ <div class="calc-card">
+ <div class="calc-title" style="color:#06b6d4"><span class="calc-title-dot"></span><span>3% NaCl &mdash; Hyponatraemia Correction</span></div>
+ <div class="calc-body">
+ <div class="calc-result" style="border:1px solid #06b6d440">
+ <div class="cr-main" style="color:#06b6d4" id="nacl-result">&mdash;</div>
+ <div class="cr-detail">Rate = Weight &times; 0.488 | Corrects Na ~0.5mmol/L/hr | Over 6hr &rarr; Na rises ~3mmol/L<br>&#9888;&#65039; Max correction: 10mmol/L per 24hr (ODS risk)</div>
+ </div>
+ </div>
+ </div>
+ <div class="calc-card">
+ <div class="calc-title" style="color:#06b6d4"><span class="calc-title-dot"></span><span>Sodium Bicarbonate <span class="brand-name">(NaHCO&#8323; / Sodib)</span></span></div>
+ <div class="calc-body">
+ <div class="field-row">
+ <div class="field-label">Base Deficit (mEq/L, from ABG)</div>
+ <div class="field-inputs">
+ <input type="range" min="1" max="25" step="1" value="10" id="bicarb-bd" oninput="syncField('bicarb-bd',this.value);calcBicarb()" style="accent-color:#06b6d4">
+ <input type="number" min="1" max="25" value="10" id="bicarb-bd-n" oninput="syncField('bicarb-bd',this.value);calcBicarb()">
+ </div>
+ </div>
+
+ <div class="calc-result" style="border:1px solid #06b6d440">
+ <div style="font-size:10px;color:var(--text-faint);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Practical Method (initial dose, 50% of deficit)</div>
+ <div class="cr-main" style="color:#06b6d4" id="bicarb-result-practical">&mdash;</div>
+ <div class="cr-detail" id="bicarb-result-practical-detail">0.3 &times; Base Deficit &times; Weight &divide; 2 | Give half now, reassess ABG before completing correction</div>
+ </div>
+
+ <div class="calc-result" style="border:1px solid #10b98140; margin-top:8px">
+ <div style="font-size:10px;color:var(--text-faint);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Standard Formula (full deficit)</div>
+ <div class="cr-main" style="color:#10b981" id="bicarb-result-full">&mdash;</div>
+ <div class="cr-detail" id="bicarb-result-full-detail">0.3 &times; Base Deficit &times; Weight | Verified textbook formula &mdash; this is what the practical method above halves</div>
+ </div>
+
+ <div class="note-box" style="margin-top:8px">
+ ⚠️ The Practical Method already includes a built-in 50% safety reduction — don't halve it again. Target pH 7.2, not full normalization, in the first 24hr. Recheck ABG before giving the remainder.
+ </div>
+ </div>
+ </div>
+ <div class="calc-card">
+ <div class="calc-title" style="color:#10b981"><span class="calc-title-dot"></span><span>Potassium Deficit</span></div>
+ <div class="calc-body">
+ <div class="field-row">
+ <div class="field-label">Measured K&#8314; (mmol/L)</div>
+ <div class="field-inputs">
+ <input type="range" min="1" max="3.9" step="0.1" value="2.5" id="k-val" oninput="syncField('k-val',this.value);calcK()" style="accent-color:#10b981">
+ <input type="number" min="1" max="3.9" step="0.1" value="2.5" id="k-val-n" oninput="syncField('k-val',this.value);calcK()">
+ </div>
+ </div>
+
+ <div class="calc-result" style="border:1px solid #10b98140">
+ <div style="font-size:10px;color:var(--text-faint);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Standard Formula (deficit only)</div>
+ <div class="cr-main" style="color:#10b981" id="k-result">&mdash;</div>
+ <div class="cr-detail">[4 &minus; K] &times; Weight/2 | Textbook estimate (extracellular-based)</div>
+ </div>
+
+ <div class="calc-result" style="border:1px solid #06b6d440; margin-top:8px">
+ <div style="font-size:10px;color:var(--text-faint);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Deficit + Daily Requirement</div>
+ <div class="cr-main" style="color:#06b6d4" id="k-result-total">&mdash;</div>
+ <div class="cr-detail" id="k-result-total-detail">Deficit (above) + maintenance 1mmol/kg/day | More realistic for 24hr replacement planning</div>
+ </div>
+
+ <div class="note-box" style="margin-top:8px">
+ ⚠️ These methods can disagree significantly, and none should be treated as a precise number. Total body K&#8314; is ~98% intracellular, so serum value alone underestimates true deficit, especially when K &lt; 3. Use clinical judgment, replace gradually, and titrate to repeat measurements rather than any single calculated figure.<br>
+ Replace via central line at 10mmol/hr (max 20mmol/hr) | 1 amp = 20mmol
+ </div>
+ </div>
+ </div>
+
+ <div class="calc-card">
+ <div class="calc-title" style="color:#f97316"><span class="calc-title-dot"></span><span>Unfractionated Heparin with APTT adjustment</span></div>
+ <div class="calc-body">
+ <div class="field-row">
+ <div class="field-label">Weight (kg)</div>
+ <div class="field-inputs">
+ <input type="range" min="30" max="120" step="1" value="60" id="hep-wt" oninput="syncField('hep-wt',this.value);calcHeparin()" style="accent-color:#f97316">
+ <input type="number" min="30" max="120" step="1" value="60" id="hep-wt-n" oninput="syncField('hep-wt',this.value);calcHeparin()">
+ </div>
+ </div>
+ <div class="field-row">
+ <div class="field-label">APTT Result (seconds)</div>
+ <div class="field-inputs">
+ <input type="range" min="20" max="200" step="1" value="60" id="aptt-val" oninput="syncField('aptt-val',this.value);calcHeparin()" style="accent-color:#f97316">
+ <input type="number" min="20" max="200" step="1" value="60" id="aptt-val-n" oninput="syncField('aptt-val',this.value);calcHeparin()">
+ </div>
+ </div>
+ <div class="calc-result" style="border:1px solid #1e3a8a">
+ <div class="cr-main" id="hep-action">&mdash;</div>
+ <div class="cr-detail" id="hep-detail">&mdash;</div>
+ </div>
+ <div class="calc-result" style="border:1px solid #1e3a8a; margin-top:10px">
+ <div style="font-size:11px;color:var(--text-faint);margin-bottom:6px">Bolus &amp; Rate Change for current weight</div>
+ <div style="font-weight:800;font-size:15px" id="hep-init">&mdash;</div>
+ </div>
+ <div class="note-box" style="margin-top:8px">
+ <strong style="color:#f97316">Initial bolus:</strong> 80 IU/kg, then infusion 18 IU/kg/hr (actual body weight)<br>
+ <strong style="color:#f97316">Dilution:</strong> 1 ampule (5000units) + 50ml NS &rarr; 50ml (100units/ml)<br>
+ <strong style="color:#f97316">Target PTT:</strong> 46&ndash;70 sec (1.5&ndash;2.3 &times; control)<br>
+ Check APTT 6 hourly after start / after any change | Daily once stable in range
+ </div>
+ <div style="margin-top:10px; overflow-x:auto">
+ <table style="width:100%; border-collapse:collapse; font-size:11px">
+ <thead>
+ <tr style="background:#1e293b">
+ <th style="padding:6px 4px; text-align:left; color:#f97316">PTT (sec)</th>
+ <th style="padding:6px 4px; text-align:left; color:#f97316">Ratio</th>
+ <th style="padding:6px 4px; text-align:left; color:#f97316">Bolus</th>
+ <th style="padding:6px 4px; text-align:left; color:#f97316">Infusion Change</th>
+ </tr>
+ </thead>
+ <tbody style="color:var(--text)">
+ <tr style="border-bottom:1px solid #1e293b"><td style="padding:5px 4px">&lt;35</td><td style="padding:5px 4px">&lt;1.2</td><td style="padding:5px 4px">80 IU/kg</td><td style="padding:5px 4px">+4 IU/kg/hr</td></tr>
+ <tr style="border-bottom:1px solid #1e293b"><td style="padding:5px 4px">35&ndash;45</td><td style="padding:5px 4px">1.3&ndash;1.5</td><td style="padding:5px 4px">40 IU/kg</td><td style="padding:5px 4px">+2 IU/kg/hr</td></tr>
+ <tr style="border-bottom:1px solid #1e293b; background:#f9731615"><td style="padding:5px 4px">46&ndash;70</td><td style="padding:5px 4px">1.5&ndash;2.3</td><td style="padding:5px 4px">&mdash;</td><td style="padding:5px 4px">No change</td></tr>
+ <tr style="border-bottom:1px solid #1e293b"><td style="padding:5px 4px">71&ndash;90</td><td style="padding:5px 4px">2.3&ndash;3.0</td><td style="padding:5px 4px">&mdash;</td><td style="padding:5px 4px">&minus;2 IU/kg/hr</td></tr>
+ <tr><td style="padding:5px 4px">&gt;90</td><td style="padding:5px 4px">&gt;3</td><td style="padding:5px 4px">&mdash;</td><td style="padding:5px 4px">Stop 1hr, then &minus;3 IU/kg/hr</td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+
+ <div class="calc-card">
+ <div class="calc-title" style="color:#a78bfa"><span class="calc-title-dot" style="background:#a78bfa"></span><span>SIADH <span style="color:var(--text-faint);font-weight:400">vs</span> CSW &mdash; Differentiator</span></div>
+ <div class="calc-body" style="padding-top:10px">
+
+  <!-- Required fields -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+   <div style="background:var(--surface-deep);border-radius:7px;padding:6px 8px">
+    <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px">Serum Na⁺ (mmol/L)</div>
+    <div class="field-inputs"><input type="range" min="100" max="135" step="1" value="122" id="csw-sna" oninput="syncField('csw-sna',this.value);calcSIADH()" style="accent-color:#a78bfa"><input type="number" min="100" max="135" value="122" id="csw-sna-n" oninput="syncField('csw-sna',this.value);calcSIADH()" style="width:50px;background:var(--surface-input);border:1px solid var(--border-strong);border-radius:5px;color:var(--text);padding:3px;font-size:12px;text-align:center"></div>
+   </div>
+   <div style="background:var(--surface-deep);border-radius:7px;padding:6px 8px">
+    <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px">Serum Osm (mOsm/kg)</div>
+    <div class="field-inputs"><input type="range" min="240" max="295" step="1" value="268" id="csw-sosm" oninput="syncField('csw-sosm',this.value);calcSIADH()" style="accent-color:#a78bfa"><input type="number" min="240" max="295" value="268" id="csw-sosm-n" oninput="syncField('csw-sosm',this.value);calcSIADH()" style="width:50px;background:var(--surface-input);border:1px solid var(--border-strong);border-radius:5px;color:var(--text);padding:3px;font-size:12px;text-align:center"></div>
+   </div>
+   <div style="background:var(--surface-deep);border-radius:7px;padding:6px 8px">
+    <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px">Urine Na⁺ (mmol/L)</div>
+    <div class="field-inputs"><input type="range" min="10" max="200" step="5" value="80" id="csw-una" oninput="syncField('csw-una',this.value);calcSIADH()" style="accent-color:#a78bfa"><input type="number" min="10" max="200" value="80" id="csw-una-n" oninput="syncField('csw-una',this.value);calcSIADH()" style="width:50px;background:var(--surface-input);border:1px solid var(--border-strong);border-radius:5px;color:var(--text);padding:3px;font-size:12px;text-align:center"></div>
+   </div>
+   <div style="background:var(--surface-deep);border-radius:7px;padding:6px 8px">
+    <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px">Urine Osm (mOsm/kg)</div>
+    <div class="field-inputs"><input type="range" min="100" max="1200" step="10" value="600" id="csw-uosm" oninput="syncField('csw-uosm',this.value);calcSIADH()" style="accent-color:#a78bfa"><input type="number" min="100" max="1200" value="600" id="csw-uosm-n" oninput="syncField('csw-uosm',this.value);calcSIADH()" style="width:50px;background:var(--surface-input);border:1px solid var(--border-strong);border-radius:5px;color:var(--text);padding:3px;font-size:12px;text-align:center"></div>
+   </div>
+  </div>
+
+  <!-- Optional fields toggle -->
+  <div style="margin-bottom:6px">
+   <button type="button" id="optional-toggle" onclick="(function(){var box=document.getElementById('optional-fields');var open=box.style.display==='block';box.style.display=open?'none':'block';document.getElementById('optional-toggle').innerHTML=open?'＋ Optional: Serum Uric Acid &amp; BUN/Cr Ratio <span style=&quot;font-size:9.5px;opacity:0.7&quot;>(if available)</span>':'－ Optional: Serum Uric Acid &amp; BUN/Cr Ratio <span style=&quot;font-size:9.5px;opacity:0.7&quot;>(if available)</span>';try{calcSIADH();}catch(e){};})()" style="width:100%;padding:5px 8px;border-radius:6px;border:1px dashed var(--border-strong);background:transparent;color:var(--text-faint);font-size:10.5px;font-weight:600;cursor:pointer;text-align:left">
+    ＋ Optional: Serum Uric Acid &amp; BUN/Cr Ratio <span style="font-size:9.5px;opacity:0.7">(if available)</span>
+   </button>
+   <div id="optional-fields" style="display:none;margin-top:5px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+     <div style="background:var(--surface-deep);border-radius:7px;padding:6px 8px;border:1px dashed var(--border-accent)">
+      <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px">Serum Uric Acid (mg/dL)</div>
+      <div class="field-inputs"><input type="range" min="1" max="10" step="0.5" value="3.5" id="csw-ua" oninput="syncField('csw-ua',this.value);calcSIADH()" style="accent-color:#a78bfa"><input type="number" min="1" max="10" step="0.5" value="3.5" id="csw-ua-n" oninput="syncField('csw-ua',this.value);calcSIADH()" style="width:50px;background:var(--surface-input);border:1px solid var(--border-strong);border-radius:5px;color:var(--text);padding:3px;font-size:12px;text-align:center"></div>
+     </div>
+     <div style="background:var(--surface-deep);border-radius:7px;padding:6px 8px;border:1px dashed var(--border-accent)">
+      <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px">BUN / Creatinine Ratio</div>
+      <div class="field-inputs"><input type="range" min="5" max="30" step="1" value="10" id="csw-bun" oninput="syncField('csw-bun',this.value);calcSIADH()" style="accent-color:#a78bfa"><input type="number" min="5" max="30" step="1" value="10" id="csw-bun-n" oninput="syncField('csw-bun',this.value);calcSIADH()" style="width:50px;background:var(--surface-input);border:1px solid var(--border-strong);border-radius:5px;color:var(--text);padding:3px;font-size:12px;text-align:center"></div>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <!-- Volume status -->
+  <div style="background:var(--surface-deep);border-radius:7px;padding:6px 8px;margin-bottom:6px">
+   <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Clinical Volume Status</div>
+   <div style="display:flex;gap:5px">
+    <button onclick="setVolStatus('depleted')" id="vs-depleted" style="flex:1;padding:5px 3px;border-radius:5px;border:1px solid #a78bfa;background:#a78bfa22;color:#a78bfa;font-size:11px;font-weight:700;cursor:pointer">⬇ Depleted</button>
+    <button onclick="setVolStatus('normal')" id="vs-normal" style="flex:1;padding:5px 3px;border-radius:5px;border:1px solid var(--border-strong);background:transparent;color:var(--text-faint);font-size:11px;font-weight:600;cursor:pointer">↔ Normal</button>
+    <button onclick="setVolStatus('expanded')" id="vs-expanded" style="flex:1;padding:5px 3px;border-radius:5px;border:1px solid var(--border-strong);background:transparent;color:var(--text-faint);font-size:11px;font-weight:600;cursor:pointer">⬆ Expanded</button>
+   </div>
+  </div>
+
+  <!-- Score breakdown -->
+  <div id="siadh-score-box" style="background:var(--surface-deep);border-radius:7px;padding:8px 10px;margin-bottom:6px;display:none">
+   <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Parameter Analysis</div>
+   <div id="siadh-score-rows"></div>
+  </div>
+
+  <!-- Result -->
+  <div id="siadh-result-box" style="border-radius:9px;padding:10px 12px;margin-bottom:6px;display:none">
+   <div id="siadh-diagnosis" style="font-size:17px;font-weight:900;margin-bottom:3px"></div>
+   <div id="siadh-confidence" style="font-size:10.5px;margin-bottom:8px"></div>
+   <div id="siadh-management" style="font-size:11px;line-height:1.65"></div>
+  </div>
+
+  <button onclick="calcSIADH()" style="width:100%;padding:8px;border-radius:7px;border:1px solid #a78bfa;background:#a78bfa22;color:#a78bfa;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:2px">▶ Analyse / Refresh Result</button>
+
+  <!-- Reference table -->
+  <div style="margin-top:10px;overflow-x:auto">
+   <div style="font-size:9.5px;color:var(--text-faint);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Reference: Key Differentiators</div>
+   <table style="width:100%;border-collapse:collapse;font-size:10px">
+    <thead><tr style="background:#1e293b">
+     <th style="padding:5px 4px;text-align:left;color:#a78bfa">Parameter</th>
+     <th style="padding:5px 4px;text-align:center;color:#06b6d4">SIADH</th>
+     <th style="padding:5px 4px;text-align:center;color:#f97316">CSW</th>
+    </tr></thead>
+    <tbody style="color:var(--text)">
+     <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 4px;color:var(--text-muted)">Volume status</td><td style="padding:4px 4px;text-align:center">Normal / ⬆ expanded</td><td style="padding:4px 4px;text-align:center;color:#f97316;font-weight:600">⬇ Depleted</td></tr>
+     <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 4px;color:var(--text-muted)">Urine Na⁺</td><td style="padding:4px 4px;text-align:center">&gt;40 mmol/L</td><td style="padding:4px 4px;text-align:center;color:#f97316;font-weight:600">&gt;40 (very high)</td></tr>
+     <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 4px;color:var(--text-muted)">Urine Osm</td><td style="padding:4px 4px;text-align:center">&gt;100 mOsm/kg</td><td style="padding:4px 4px;text-align:center">&gt;100 mOsm/kg</td></tr>
+     <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 4px;color:var(--text-muted)">Serum Uric Acid</td><td style="padding:4px 4px;text-align:center;color:#06b6d4;font-weight:600">⬇ &lt;4 mg/dL</td><td style="padding:4px 4px;text-align:center">Normal / low</td></tr>
+     <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 4px;color:var(--text-muted)">BUN/Cr ratio</td><td style="padding:4px 4px;text-align:center;color:#06b6d4;font-weight:600">Low (&lt;10)</td><td style="padding:4px 4px;text-align:center;color:#f97316;font-weight:600">⬆ High (&gt;10)</td></tr>
+     <tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 4px;color:var(--text-muted)">Response to NS</td><td style="padding:4px 4px;text-align:center;color:#ef4444;font-weight:600">Worsens hypoNa</td><td style="padding:4px 4px;text-align:center;color:#10b981;font-weight:600">Improves</td></tr>
+     <tr><td style="padding:4px 4px;color:var(--text-muted)">Treatment</td><td style="padding:4px 4px;text-align:center">Fluid restrict</td><td style="padding:4px 4px;text-align:center;color:#f97316;font-weight:600">IV NS + NaCl</td></tr>
+    </tbody>
+   </table>
+  </div>
+
+  <div class="note-box" style="margin-top:8px">
+   ⚠️ Volume status is the <strong>most critical differentiator</strong> — examine carefully (JVP, skin turgor, mucous membranes, BP trends, fluid balance). IV fluids in SIADH worsen hypoNa; fluid restriction in CSW worsens haemodynamic instability.<br>
+   <strong>Na correction:</strong> max 10 mmol/L per 24hr (ODS risk). Severe symptomatic (&lt;120 + Sx): 3% NaCl, target ≤5 mmol/L rise in 1hr.
+  </div>
+
+ </div>
+ </div>
+
+</div>
+
+<div id="tab-defib" class="tab-content">
+ <div class="cat-label" style="color:#f59e0b; margin-bottom:12px">Cardioversion &amp; Defibrillation &middot; All Biphasic</div>
+ <div class="defib-row"><div class="defib-dot"></div><div class="badge badge-sync">SYNC</div><div style="flex:1"><div class="defib-rhythm">A Fib</div><div class="defib-sync">Synchronised</div></div><div class="defib-energy" style="color:#60a5fa">100 &rarr; 150 &rarr; 200J</div></div>
+ <div class="defib-row"><div class="defib-dot"></div><div class="badge badge-sync">SYNC</div><div style="flex:1"><div class="defib-rhythm">A Flutter</div><div class="defib-sync">Synchronised</div></div><div class="defib-energy" style="color:#60a5fa">200J</div></div>
+ <div class="defib-row"><div class="defib-dot"></div><div class="badge badge-sync">SYNC</div><div style="flex:1"><div class="defib-rhythm">Stable VT / SVT</div><div class="defib-sync">Synchronised</div></div><div class="defib-energy" style="color:#60a5fa">20 &rarr; 40J</div></div>
+ <div class="defib-row"><div class="defib-dot"></div><div class="badge badge-defib">DEFIB</div><div style="flex:1"><div class="defib-rhythm">Pulseless VT / VF</div><div class="defib-sync">Asynchronous</div></div><div class="defib-energy" style="color:#fca5a5">120 &rarr; 200J</div></div>
+ <div class="defib-row"><div class="defib-dot"></div><div class="badge badge-sync">SYNC</div><div style="flex:1"><div class="defib-rhythm">WCT &#275; Pulse</div><div class="defib-sync">Synchronised</div></div><div class="defib-energy" style="color:#60a5fa">100&rarr;200&rarr;300J <span style="font-size:10px;color:var(--text-faint)">(monophasic)</span></div></div>
+ <div style="background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;padding:12px 14px;margin-top:16px">
+ <div style="font-size:11px;color:#f59e0b;font-weight:700;margin-bottom:8px;padding-bottom:4px" class="adenosine-title">SVT Management &amp; Adenosine (Adecard) Protocol</div>
+ <div style="margin-top:0;font-size:11.5px;line-height:1.9;color:var(--text-muted)">
+ <strong>If SVT:</strong><br>
+ &nbsp;&nbsp;<strong>1.</strong> Stop any inotrope<br>
+ &nbsp;&nbsp;<strong>2.</strong> Start Carotid Sinus Massage<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If not improved &rarr;<br>
+ &nbsp;&nbsp;<strong>3.</strong> Inj. Adecard 6mg IV flash <span style="color:#ef4444">(CI: Bronchial Asthma)</span><br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Observe 2-3 min &rarr; if not resolved:<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flash <strong>2 amp (12mg)</strong>, observe 5 min &rarr; if not resolved:<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flash <strong>2 amp (12mg)</strong>, observe 2-5 min &rarr; if no improvement:<br>
+ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong style="color:#ef4444">&#9889; DC Shock</strong><br>
+ <br>
+ <strong>Standard doses:</strong><br>
+ &nbsp;&nbsp;Peripheral vein: <strong style="color:#f59e0b">6 &rarr; 12 &rarr; 12mg</strong><br>
+ &nbsp;&nbsp;Central / CCB / BB: <strong style="color:#f59e0b">3 &rarr; 6 &rarr; 6mg</strong><br>
+ &nbsp;&nbsp;Each dose: rapid IV flash, FLUSH 20ml NS immediately<br>
+ &nbsp;&nbsp;T&frac12; = 30 sec | Wait 2 min between doses | CI: Asthma, Heart block
+ </div>
+ </div>
+ <div style="background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;padding:12px 14px;margin-top:12px">
+ <div style="font-size:11px;color:#f59e0b;font-weight:700;margin-bottom:8px" class="gtn-title">GTN Quick Reference (not weight-based)</div>
+ <div class="gtn-table">
+ <div class="gtn-row"><span class="gtn-dose">10mcg/min</span><span class="gtn-rate">0.6ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">20mcg/min</span><span class="gtn-rate">1.2ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">30mcg/min</span><span class="gtn-rate">1.8ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">40mcg/min</span><span class="gtn-rate">2.4ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">50mcg/min</span><span class="gtn-rate">3.0ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">60mcg/min</span><span class="gtn-rate">3.6ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">80mcg/min</span><span class="gtn-rate">4.8ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">100mcg/min</span><span class="gtn-rate">6.0ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">150mcg/min</span><span class="gtn-rate">9.0ml/hr</span></div>
+ <div class="gtn-row"><span class="gtn-dose">200mcg/min</span><span class="gtn-rate">12.0ml/hr</span></div>
+ </div>
+ </div>
+</div>
+
+<div class="footer">
+ <div class="footer-inner">
+ <div class="footer-pipe-wrap">
+ <span class="footer-pipe"></span>
+ </div>
+ <div class="footer-lines">
+ Ref<span class="footer-ref-sep">:</span> WMCCM<span class="footer-dot">&bull;</span>Irwin &amp; Rippe<span class="footer-dot">&bull;</span>CMDT<span class="footer-dot">&bull;</span>ESC Guidelines<br>
+ &#9888;&#65039; Always verify doses clinically. <span style="color:var(--footer-name)">&copy; Dr. Mottaqir Mamun</span>
+ </div>
+ <div class="footer-toggle-wrap">
+ <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+ <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+ <circle cx="12" cy="12" r="4"></circle>
+ <line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line>
+ <line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>
+ <line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line>
+ <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>
+ </svg>
+ <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+ <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+ </svg>
+ </button>
+ </div>
+ </div>
+</div>
+
+<script>
+let volStatus = 'depleted';
+let optionalOpen = false;
+
+const bolusData = [
+ { name:"Amiodarone", cat:"Anti-arrhythmic", color:"#f59e0b", amp:"1 amp = 3ml = 150mg", doseMin:null, doseMax:null, unit:"150mg fixed bolus", headerLabel:"150 – 300 mg", onset:"5-10 min", duration:"Variable", note:"Inj. 150mg (1 amp) in 20ml 5% DA IV over 20-30 min. N.B. Maximum 2 bolus doses. If AF not corrected after 2nd bolus → start maintenance infusion." },
+ { name:"Labetalol", cat:"Anti-hypertensive", color:"#f59e0b", amp:"1 amp = 10ml = 50mg", doseMin:0.25, doseMax:0.5, unit:"mg/kg IV over 10 min", onset:"5-10 min", duration:"3-6 hr", note:"Usual dose: 20-80mg slow IV | Repeat every 10 min PRN | Max cumulative: 300mg | CI: Asthma, bradycardia, heart block, decompensated HF" },
+ { name:"Midazolam", cat:"Sedation", color:"#8b5cf6", amp:"5mg/5cc OR 15mg/3cc amp", doseMin:0.02, doseMax:0.1, unit:"mg/kg slow IV", onset:"2-3 min", duration:"15-30 min", note:"IV bolus slowly over 2 min | Titrate to effect | Reduce dose in elderly & hepatic impairment" },
+ { name:"Fentanyl", cat:"Analgesia", color:"#8b5cf6", amp:"1 amp = 2ml = 100mcg", doseMin:1, doseMax:1.5, unit:"mcg/kg slow IV", onset:"2-5 min", duration:"30-60 min", note:"Give slowly over 3-5 min | Bolus: 0.3-1.5mcg/kg | Reduce in elderly & renal impairment" },
+ { name:"Propofol", cat:"Sedation", color:"#8b5cf6", amp:"200mg/20ml vial (10mg/ml)", doseMin:1, doseMax:2.5, unit:"mg/kg", onset:"60 sec", duration:"-", note:"For 70kg: 70-175mg" },
+ { name:"Suxamethonium", cat:"NMB (RSI)", color:"#f97316", amp:"100mg/2ml amp (50mg/ml)", doseMin:1, doseMax:2, unit:"mg/kg", onset:"45-60 sec", duration:"5 min", note:"RSI drug of choice" },
+ { name:"Atracurium", cat:"NMB", color:"#f97316", amp:"25mg/2.5ml amp (10mg/ml)", doseMin:0.5, doseMax:0.5, unit:"mg/kg", onset:"90 sec", duration:"-", note:"Safe in hepatic & renal impairment" },
+ { name:"Vecuronium <span class=\"brand-name\">(Norcuron)</span>", cat:"NMB", color:"#f97316", amp:"10mg dry powder + 10ml NS", doseMin:0.08, doseMax:0.1, unit:"mg/kg (intubation)", onset:"90-120 sec", duration:"30 min", note:"Maintenance: 0.02-0.03mg/kg | 70kg ~ half amp" },
+ { name:"Pipecuronium <span class=\"brand-name\">(Arduan)</span>", cat:"NMB", color:"#f97316", amp:"4mg dry powder + 2ml NS", doseMin:0.06, doseMax:0.08, unit:"mg/kg", onset:"90-120 sec", duration:"60 min", note:"Renal failure: 0.04mg/kg | CI: Myasthenia Gravis | Antidote: Neostigmine" },
+ { name:"Adenosine <span class=\"brand-name\">(Adecard)</span>", cat:"Anti-arrhythmic", color:"#f59e0b", amp:"1 amp = 2ml = 6mg", doseMin:null, doseMax:null, unit:"mg rapid push", headerLabel:"6 – 12 mg", onset:"30 sec", duration:"2 min", note:"Peripheral: 6-12-12mg | Central/CCB/BB: 3-6-6mg | FLUSH 20ml NS | CI: Asthma, Heart block" },
+ { name:"Verapamil <span class=\"brand-name\">(Veracal)</span>", cat:"Anti-arrhythmic", color:"#f59e0b", amp:"1 amp = 2ml = 5mg", doseMin:0.075, doseMax:0.15, unit:"mg/kg IV push over 30sec-2min", onset:"5 min", duration:"2-8 hr", note:"EASY: 5-10mg | SVT only (NOT WPW) | If BP down: Ca gluconate 10% 10ml over 10min" },
+ { name:"Phenytoin <span class=\"brand-name\">(Eptoin)</span>", cat:"Anti-epileptic", color:"#06b6d4", amp:"1 amp = 2ml = 100mg", doseMin:15, doseMax:15, unit:"mg/kg loading", onset:"-", duration:"-", note:"Dilute each amp to 5ml | 1 amp/min | CI: Pregnancy, Bradycardia" },
+ { name:"Human Insulin R <span class=\"brand-name\">(Actrapid HM 100IU/ml)</span>", cat:"Endocrine", color:"#10b981", amp:"100 IU/ml vial | S/C injection", doseMin:null, doseMax:null, unit:"units S/C", onset:"15-30 min", duration:"4-6 hr", slidingScale:true, smallHeader:true },
+];
+
+function getWt() { return parseFloat(document.getElementById('globalWt').value) || 60; }
+
+function syncField(baseId, value) {
+ const r = document.getElementById(baseId);
+ const n = document.getElementById(baseId + '-n');
+ if (r) r.value = value;
+ if (n) n.value = value;
+}
+
+function syncWt(val) {
+ let v = parseInt(val) || 60;
+ v = Math.min(120, Math.max(30, v));
+ document.getElementById('globalWt').value = v;
+ document.getElementById('globalWtNum').value = v;
+ updateAll();
+}
+
+const slidingScaleHTML = `
+ <div style="margin-top:10px;overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:11px">
+   <thead>
+    <tr style="background:#1e293b">
+     <th style="padding:6px 4px;text-align:left;color:#10b981">CBG (mmol/L)</th>
+     <th style="padding:6px 4px;text-align:left;color:#10b981">Dose</th>
+     <th style="padding:6px 4px;text-align:left;color:#10b981">Action</th>
+    </tr>
+   </thead>
+   <tbody style="color:var(--text)">
+    <tr style="border-bottom:1px solid #1e293b"><td style="padding:5px 4px">8 – 10</td><td style="padding:5px 4px;font-weight:700;color:#10b981">2 units S/C</td><td style="padding:5px 4px">Give S/C</td></tr>
+    <tr style="border-bottom:1px solid #1e293b"><td style="padding:5px 4px">10 – 14</td><td style="padding:5px 4px;font-weight:700;color:#10b981">4 units S/C</td><td style="padding:5px 4px">Give S/C</td></tr>
+    <tr style="border-bottom:1px solid #1e293b"><td style="padding:5px 4px">14 – 17</td><td style="padding:5px 4px;font-weight:700;color:#10b981">6 units S/C</td><td style="padding:5px 4px">Give S/C</td></tr>
+    <tr style="border-bottom:1px solid #1e293b"><td style="padding:5px 4px">17 – 20</td><td style="padding:5px 4px;font-weight:700;color:#10b981">8 units S/C</td><td style="padding:5px 4px">Give S/C</td></tr>
+    <tr><td style="padding:5px 4px">&gt; 20</td><td style="padding:5px 4px;font-weight:700;color:#ef4444">10 units S/C</td><td style="padding:5px 4px;color:#ef4444">Give S/C + Call doctor</td></tr>
+   </tbody>
+  </table>
+ </div>`;
+
+function renderBolus() {
+ const wt = getWt();
+ let html = '';
+ bolusData.forEach((d, i) => {
+ const id = 'bc-' + i;
+ let doseText = d.doseMin === null ? 'See note'
+ : d.doseMin === d.doseMax ? (d.doseMin * wt).toFixed(1) + ' mg'
+ : (d.doseMin * wt).toFixed(1) + ' - ' + (d.doseMax * wt).toFixed(1) + ' mg';
+
+ let bodyContent = '';
+ if (d.slidingScale) {
+  bodyContent = `
+  ${slidingScaleHTML}
+  <div class="meta-row" style="margin-top:8px">
+   <div class="meta-box"><div class="ml">Onset</div><div class="mv">${d.onset}</div></div>
+   <div class="meta-box"><div class="ml">Duration</div><div class="mv">${d.duration}</div></div>
+  </div>
+  <div class="note-box" style="margin-top:8px">&#9200; Check CBG every 1–2 hr &nbsp;|&nbsp; Target: 8–10 mmol/L</div>`;
+ } else if (d.doseMin === null) {
+  bodyContent = `
+  <div class="note-box" style="margin-top:10px">&#8505;&#65039; ${d.note.replace(/\n/g, '<br>&nbsp;&nbsp;')}</div>
+  <div class="meta-row" style="margin-top:8px">
+   <div class="meta-box"><div class="ml">Onset</div><div class="mv">${d.onset}</div></div>
+   <div class="meta-box"><div class="ml">Duration</div><div class="mv">${d.duration}</div></div>
+  </div>`;
+ } else {
+  bodyContent = `
+  <div class="result-box" style="border:1px solid ${d.color}40;margin-top:10px">
+   <div style="font-size:11px;color:var(--text-faint)">Dose for ${wt}kg</div>
+   <div style="font-size:22px;font-weight:900;color:${d.color}">${doseText}</div>
+  </div>
+  <div class="meta-row">
+   <div class="meta-box"><div class="ml">Onset</div><div class="mv">${d.onset}</div></div>
+   <div class="meta-box"><div class="ml">Duration</div><div class="mv">${d.duration}</div></div>
+  </div>
+  <div class="note-box" style="margin-top:8px">&#8505;&#65039; ${d.note.replace(/\n/g, '<br>&nbsp;&nbsp;')}</div>`;
+ }
+
+ const headerRight = d.slidingScale
+  ? `<div style="text-align:right;font-size:14px;font-weight:700;color:${d.color};font-family:'Segoe UI',Arial,sans-serif;white-space:nowrap">Sliding Scale</div>`
+  : d.headerLabel
+  ? `<div style="text-align:right"><div style="font-size:15px;font-weight:800;color:${d.color}">${d.headerLabel}</div><div style="font-size:10px;color:var(--text-faint)">${d.unit}</div></div>`
+  : d.doseMin !== null
+  ? `<div style="text-align:right"><div style="font-size:15px;font-weight:800;color:${d.color}">${doseText}</div><div style="font-size:10px;color:var(--text-faint)">${d.unit}</div></div>`
+  : '';
+ const nameSize = d.smallHeader ? 'font-size:11px' : 'font-size:14px';
+ const rightSize = d.smallHeader ? 'font-size:11px' : 'font-size:14px';
+ html += `<div class="bolus-card" id="${id}">
+ <div class="bolus-header" onclick="toggleBolus('${id}')">
+ <div class="drug-dot" style="background:${d.color}"></div>
+ <div style="flex:1"><div class="drug-name" style="${nameSize}">${d.name}</div><div style="font-size:10px;color:var(--text-fainter)">${d.cat} &middot; ${d.amp}</div></div>
+ ${d.slidingScale && d.smallHeader ? `<div style="text-align:right;font-size:12px;font-weight:700;color:${d.color};font-family:'Segoe UI',Arial,sans-serif;white-space:nowrap;align-self:center">Sliding Scale</div>` : headerRight}
+ </div>
+ <div class="bolus-body">${bodyContent}
+ </div>
+ </div>`;
+ });
+ document.getElementById('bolus-list').innerHTML = html;
+}
+
+function toggleBolus(id) { document.getElementById(id).classList.toggle('open'); }
+
+function calcInfusion(id, dose, multiplier, conc, unit) {
+ const wt = getWt();
+ const d = parseFloat(dose);
+ const rate = ((d * wt * multiplier) / conc).toFixed(2);
+ const isSmall = d < 1;
+ const dec = unit.includes('kg/min') ? (isSmall ? 3 : 2) : 1;
+ document.getElementById('dv-' + id).textContent = d.toFixed(dec);
+ document.getElementById('res-' + id).textContent = rate;
+ document.getElementById('rate-' + id).textContent = rate;
+}
+
+function calcFixed(id, val) {
+ document.getElementById('dv-' + id).textContent = val;
+ document.getElementById('res-' + id).textContent = val;
+ document.getElementById('rate-' + id).textContent = val;
+}
+
+function calcVaso(dose) {
+ const d = parseFloat(dose);
+ const rate = ((d * 60) / 0.4).toFixed(1);
+ document.getElementById('dv-vaso').textContent = d.toFixed(2);
+ document.getElementById('res-vaso').textContent = rate;
+ document.getElementById('rate-vaso').textContent = rate;
+}
+
+function calcGTN(dose) {
+ const rate = ((parseFloat(dose) * 60) / 1000).toFixed(1);
+ document.getElementById('dv-gtn').textContent = dose;
+ document.getElementById('res-gtn').textContent = rate;
+ document.getElementById('rate-gtn').textContent = rate;
+}
+
+function calcLasix(dose) {
+ const rate = (parseFloat(dose) / 2).toFixed(1);
+ document.getElementById('dv-lasix').textContent = dose;
+ document.getElementById('res-lasix').textContent = rate;
+ document.getElementById('rate-lasix').textContent = rate;
+}
+
+function calcNaCl() {
+ const el = document.getElementById('nacl-result');
+ if (!el) return;
+ el.textContent = (getWt() * 0.488).toFixed(1) + ' ml/hr';
+}
+
+function calcBicarb() {
+ const wt = getWt();
+ const bdEl = document.getElementById('bicarb-bd');
+ if (!bdEl) return;
+ const bd = parseFloat(bdEl.value) || 10;
+ const fullDeficit = 0.3 * bd * wt;
+ const practicalDose = fullDeficit / 2;
+ const practicalBottles = Math.ceil(practicalDose / 22);
+ document.getElementById('bicarb-result-practical').textContent = practicalDose.toFixed(0) + ' mmol → ' + practicalBottles + ' bottles (' + (practicalBottles * 25) + ' ml)';
+ document.getElementById('bicarb-result-practical-detail').textContent = '0.3 × ' + bd + ' × ' + wt + ' ÷ 2 = ' + practicalDose.toFixed(0) + ' mmol | Give half now, reassess ABG before completing correction';
+
+ const fullBottles = Math.ceil(fullDeficit / 22);
+ document.getElementById('bicarb-result-full').textContent = fullDeficit.toFixed(0) + ' mmol → ' + fullBottles + ' bottles (' + (fullBottles * 25) + ' ml)';
+ document.getElementById('bicarb-result-full-detail').textContent = '0.3 × ' + bd + ' × ' + wt + ' = ' + fullDeficit.toFixed(0) + ' mmol total | This is what gets halved above for safety';
+}
+
+function calcK() {
+ const wt = getWt();
+ const kEl = document.getElementById('k-val');
+ if (!kEl) return;
+ const k = parseFloat(kEl.value) || 2.5;
+ const deficit = ((4 - k) * wt / 2);
+ document.getElementById('k-result').textContent = deficit.toFixed(0) + ' mmol total  ~ ' + Math.ceil(deficit / 10) + ' hrs at 10mmol/hr';
+
+ const dailyReq = 1 * wt;
+ const totalWithDaily = deficit + dailyReq;
+ document.getElementById('k-result-total').textContent = totalWithDaily.toFixed(0) + ' mmol total (≈ ' + Math.ceil(totalWithDaily/20) + ' amp)';
+ document.getElementById('k-result-total-detail').textContent = 'Deficit ' + deficit.toFixed(0) + ' + Maintenance ' + dailyReq.toFixed(0) + ' (1mmol/kg/day) = ' + totalWithDaily.toFixed(0) + ' mmol over 24hr';
+}
+
+function calcAmio() {
+ const el = document.getElementById('amio-result');
+ if (!el) return;
+ const wt = getWt();
+ const bolus = (5 * wt).toFixed(0);
+ const maint = (15 * wt).toFixed(0);
+ el.innerHTML = 'Bolus: ' + bolus + 'mg (' + Math.ceil(bolus/150) + ' amp)<br>Maintenance: ' + maint + 'mg/24hr (' + Math.ceil(maint/150) + ' amp)';
+}
+
+function calcHeparin() {
+ const aptt = parseFloat(document.getElementById('aptt-val').value) || 60;
+ const wt = parseFloat(document.getElementById('hep-wt').value) || 60;
+ let action, detail, bolusIU = 0, rateChange = 0, holdMsg = '';
+
+ if (aptt < 35) {
+ action = '⬆️ Bolus 80 IU/kg + increase rate';
+ detail = 'PTT < 35s (ratio < 1.2): Subtherapeutic';
+ bolusIU = 80; rateChange = 4;
+ } else if (aptt <= 45) {
+ action = '⬆️ Bolus 40 IU/kg + increase rate';
+ detail = 'PTT 35–45s (ratio 1.3–1.5): Below target';
+ bolusIU = 40; rateChange = 2;
+ } else if (aptt <= 70) {
+ action = '✅ No change — therapeutic range';
+ detail = 'PTT 46–70s (ratio 1.5–2.3): Target achieved';
+ bolusIU = 0; rateChange = 0;
+ } else if (aptt <= 90) {
+ action = '⬇️ Decrease rate, no bolus';
+ detail = 'PTT 71–90s (ratio 2.3–3.0): Slightly supratherapeutic';
+ bolusIU = 0; rateChange = -2;
+ } else {
+ action = '🛑 Stop infusion 1hr, then decrease rate';
+ detail = 'PTT > 90s (ratio > 3): Markedly elevated';
+ bolusIU = 0; rateChange = -3;
+ holdMsg = 'Hold infusion for 1 hour, then restart at reduced rate';
+ }
+
+ const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+ const hepColor = isLight ? '#1d4ed8' : '#93c5fd';
+ document.getElementById('hep-action').textContent = action;
+ document.getElementById('hep-action').style.color = hepColor;
+ document.getElementById('hep-init').style.color = hepColor;
+ document.getElementById('hep-detail').textContent = detail + (holdMsg ? ' | ' + holdMsg : '');
+
+ const bolusDose = (bolusIU * wt).toFixed(0);
+ const rateChangeDose = (Math.abs(rateChange) * wt / 100).toFixed(2);
+ let initText = '';
+ if (bolusIU > 0) {
+ initText += 'Bolus: ' + bolusDose + ' units (' + (bolusDose/100).toFixed(2) + ' ml)';
+ }
+ if (rateChange !== 0) {
+ initText += (initText ? ' | ' : '') + (rateChange > 0 ? '+' : '−') + Math.abs(rateChange) + ' IU/kg/hr (' + rateChangeDose + ' ml/hr change)';
+ }
+ if (!initText) initText = 'No bolus, no rate change';
+ document.getElementById('hep-init').textContent = initText;
+}
+
+function calcPheny() {
+ const wt = getWt();
+ const dose = (15 * wt).toFixed(0);
+ const amps = Math.ceil(dose / 100);
+ document.getElementById('pheny-result').textContent = dose + 'mg = ' + amps + ' amps → give over ' + amps + ' min';
+}
+
+function updateAll() {
+ const g = id => { const el = document.getElementById(id); return el ? el.value : null; };
+ try {
+  if (g('range-nora')) calcInfusion('nora', g('range-nora'), 60, 160, 'mcg/kg/min');
+  if (g('range-vaso')) calcVaso(g('range-vaso'));
+  if (g('range-adren')) calcInfusion('adren', g('range-adren'), 60, 160, 'mcg/kg/min');
+  if (g('range-dopa')) calcInfusion('dopa', g('range-dopa'), 60, 8000, 'mcg/kg/min');
+  if (g('range-dobu')) calcInfusion('dobu', g('range-dobu'), 60, 10000, 'mcg/kg/min');
+  if (g('range-fent')) calcInfusion('fent', g('range-fent'), 1, 10, 'mcg/kg/hr');
+  if (g('range-dex')) calcInfusion('dex', g('range-dex'), 1, 4, 'mcg/kg/hr');
+  if (g('range-labet')) calcInfusion('labet', g('range-labet'), 60, 2000, 'mcg/kg/min');
+  if (g('range-prop')) calcInfusion('prop', g('range-prop'), 1, 10, 'mg/kg/hr');
+  if (g('range-midaz')) calcInfusion('midaz', g('range-midaz'), 1, 0.3, 'mg/kg/hr');
+  if (g('range-gtn')) calcGTN(g('range-gtn'));
+  if (g('range-lasix')) calcLasix(g('range-lasix'));
+  if (g('range-kcl')) calcFixed('kcl', g('range-kcl'));
+  if (g('range-ins')) calcFixed('ins', g('range-ins'));
+  if (g('range-midmor')) calcFixed('midmor', g('range-midmor'));
+ } catch(e) {}
+ try { calcNaCl(); } catch(e) {}
+ try { calcBicarb(); } catch(e) {}
+ try { calcK(); } catch(e) {}
+ try { calcAmio(); } catch(e) {}
+ try { calcHeparin(); } catch(e) {}
+ try { renderBolus(); } catch(e) {}
+}
+
+function toggleCard(id) { document.getElementById('card-' + id).classList.toggle('open'); }
+
+function showTab(name, btn) {
+ document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+ document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+ document.getElementById('tab-' + name).classList.add('active');
+ btn.classList.add('active');
+ if (name === 'bolus') renderBolus();
+}
+
+// Apply theme early to prevent flash
+(function() {
+ let saved = null;
+ try { saved = localStorage.getItem('syringe-pump-theme'); } catch (e) {}
+ if (!saved) saved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+ if (saved === 'light') document.body.setAttribute('data-theme', 'light');
+})();
+
+window.addEventListener('load', function() {
+ updateAll();
+ try { calcSIADH(); } catch(e) {}
+ renderBolus();
+ // Sync theme icons after load
+ const theme = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+ applyTheme(theme);
+});
+
+function toggleOptional() {
+ const box = document.getElementById('optional-fields');
+ const btn = document.getElementById('optional-toggle');
+ const open = box.style.display === 'block';
+ box.style.display = open ? 'none' : 'block';
+ btn.innerHTML = open
+  ? '＋ Optional: Serum Uric Acid &amp; BUN/Cr Ratio <span style="font-size:9.5px;opacity:0.7">(if available)</span>'
+  : '－ Optional: Serum Uric Acid &amp; BUN/Cr Ratio <span style="font-size:9.5px;opacity:0.7">(if available)</span>';
+ optionalOpen = !open;
+ try { calcSIADH(); } catch(e) {}
+}
+
+function setVolStatus(val) {
+ volStatus = val;
+ ['depleted','normal','expanded'].forEach(v => {
+  const b = document.getElementById('vs-' + v);
+  if (!b) return;
+  b.style.borderColor = v === val ? '#a78bfa' : 'var(--border-strong)';
+  b.style.background  = v === val ? '#a78bfa22' : 'transparent';
+  b.style.color       = v === val ? '#a78bfa' : 'var(--text-faint)';
+  b.style.fontWeight  = v === val ? '700' : '600';
+ });
+ calcSIADH();
+}
+
+function calcSIADH() {
+ try {
+ const sna  = parseFloat(document.getElementById('csw-sna').value)   || 122;
+ const sosm = parseFloat(document.getElementById('csw-sosm').value)  || 268;
+ const una  = parseFloat(document.getElementById('csw-una').value)   || 80;
+ const uosm = parseFloat(document.getElementById('csw-uosm').value)  || 600;
+
+ // score: positive → SIADH, negative → CSW
+ let score = 0;
+ const rows = [];
+
+ // Volume status (most weighted)
+ if (volStatus === 'depleted') {
+  score -= 3;
+  rows.push({ param:'Volume Status', val:'⬇ Depleted', pts:-3, note:'Strong CSW indicator' });
+ } else if (volStatus === 'normal') {
+  score += 1;
+  rows.push({ param:'Volume Status', val:'↔ Normal', pts:+1, note:'Favours SIADH' });
+ } else {
+  score += 2;
+  rows.push({ param:'Volume Status', val:'⬆ Expanded', pts:+2, note:'Classic SIADH pattern' });
+ }
+
+ // Urine Na
+ if (una > 100) {
+  score -= 2;
+  rows.push({ param:'Urine Na⁺', val:una+' mmol/L', pts:-2, note:'Very high — strongly favours CSW' });
+ } else if (una > 40) {
+  rows.push({ param:'Urine Na⁺', val:una+' mmol/L', pts:0, note:'Elevated in both — non-differentiating' });
+ } else {
+  score += 1;
+  rows.push({ param:'Urine Na⁺', val:una+' mmol/L', pts:+1, note:'Low — less typical for either' });
+ }
+
+ // Urine Osm
+ if (uosm > 300) {
+  score += 1;
+  rows.push({ param:'Urine Osm', val:uosm+' mOsm/kg', pts:+1, note:'Concentrated — supports SIADH' });
+ } else {
+  score -= 1;
+  rows.push({ param:'Urine Osm', val:uosm+' mOsm/kg', pts:-1, note:'Dilute — less consistent with SIADH' });
+ }
+
+ // Serum Uric Acid (optional)
+ if (optionalOpen) {
+  const ua = parseFloat(document.getElementById('csw-ua').value) || 3.5;
+  if (ua < 4) {
+   score += 2;
+   rows.push({ param:'Serum Uric Acid', val:ua+' mg/dL', pts:+2, note:'Low — dilutional, favours SIADH' });
+  } else if (ua <= 6) {
+   score -= 1;
+   rows.push({ param:'Serum Uric Acid', val:ua+' mg/dL', pts:-1, note:'Normal-low — slight CSW favour' });
+  } else {
+   score -= 2;
+   rows.push({ param:'Serum Uric Acid', val:ua+' mg/dL', pts:-2, note:'Normal/high — does not support SIADH' });
+  }
+
+  const bun = parseFloat(document.getElementById('csw-bun').value) || 10;
+  if (bun <= 10) {
+   score += 2;
+   rows.push({ param:'BUN/Cr Ratio', val:bun, pts:+2, note:'Low — dilutional, favours SIADH' });
+  } else if (bun <= 15) {
+   rows.push({ param:'BUN/Cr Ratio', val:bun, pts:0, note:'Borderline — non-differentiating' });
+  } else {
+   score -= 2;
+   rows.push({ param:'BUN/Cr Ratio', val:bun, pts:-2, note:'Elevated — pre-renal pattern, favours CSW' });
+  }
+ }
+
+ // Serum Osm context
+ if (sosm < 270) {
+  score += 1;
+  rows.push({ param:'Serum Osm', val:sosm+' mOsm/kg', pts:+1, note:'Low — consistent with hypo-osmolar state' });
+ } else {
+  rows.push({ param:'Serum Osm', val:sosm+' mOsm/kg', pts:0, note:'Normal range — verify aetiology' });
+ }
+
+ // Render parameter rows
+ const scoreBox  = document.getElementById('siadh-score-box');
+ const scoreRows = document.getElementById('siadh-score-rows');
+ scoreBox.style.display = 'block';
+ scoreRows.innerHTML = rows.map(r => {
+  const col  = r.pts > 0 ? '#06b6d4' : r.pts < 0 ? '#f97316' : 'var(--text-faint)';
+  const sign = r.pts > 0 ? '+' : '';
+  const ptsDisplay = r.pts !== 0 ? sign + r.pts : '—';
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px">
+   <div style="flex:1;padding-right:6px"><span style="color:var(--text-muted);font-weight:600">${r.param}</span><br><span style="color:var(--text-faint);font-size:10px">${r.note}</span></div>
+   <div style="text-align:right;flex-shrink:0"><span style="color:var(--text-strong);font-weight:700;font-size:11px">${r.val}</span><br><span style="color:${col};font-weight:800;font-size:13px">${ptsDisplay}</span></div>
+  </div>`;
+ }).join('');
+
+ // Determine diagnosis
+ const resBox = document.getElementById('siadh-result-box');
+ const diag   = document.getElementById('siadh-diagnosis');
+ const conf   = document.getElementById('siadh-confidence');
+ const mgmt   = document.getElementById('siadh-management');
+ resBox.style.display = 'block';
+
+ let dx, color, confidence, management;
+ if (score >= 4) {
+  dx = '✅ Likely SIADH'; color = '#06b6d4';
+  confidence = 'Strong evidence for SIADH (Score: +' + score + ')';
+  management = '• <strong>Fluid restrict:</strong> 500–1000 ml/day (below daily urine output)<br>• Treat underlying cause (drugs, CNS, pulmonary, malignancy)<br>• <strong>Avoid isotonic saline</strong> — worsens hypoNa in euvolaemic SIADH<br>• Chronic/mild: consider demeclocycline or tolvaptan<br>• Severe symptomatic (&lt;120 + Sx): 3% NaCl — target ≤5 mmol/L rise in 1hr, max 10 mmol/L per 24hr';
+ } else if (score >= 2) {
+  dx = '⚠️ Probable SIADH'; color = '#a78bfa';
+  confidence = 'Moderate evidence for SIADH (Score: +' + score + ') — clinical correlation essential';
+  management = '• Cautious fluid restriction while re-examining volume status<br>• Repeat labs 6–12hr<br>• <strong>Do NOT give IV saline</strong> until volume status confirmed normal/expanded<br>• Treat underlying cause — review all medications';
+ } else if (score <= -3) {
+  dx = '🔴 Likely CSW'; color = '#f97316';
+  confidence = 'Strong evidence for CSW (Score: ' + score + ')';
+  management = '• <strong>IV 0.9% NaCl</strong> — volume replacement is the cornerstone<br>• Oral NaCl tablets 1–3g TDS with meals<br>• Fludrocortisone 0.1–0.2 mg/day (reduces renal Na loss — off-label)<br>• <strong>Do NOT fluid restrict</strong> — will worsen haemodynamic instability<br>• Monitor electrolytes 6-hourly; Na correction max 10 mmol/L per 24hr';
+ } else if (score <= -1) {
+  dx = '⚠️ Probable CSW'; color = '#f59e0b';
+  confidence = 'Moderate evidence for CSW (Score: ' + score + ') — clinical correlation essential';
+  management = '• Cautious IV fluid trial (NS) and monitor Na response<br>• Na improves → confirms CSW; Na worsens → reconsider SIADH<br>• Reassess volume status: JVP, skin turgor, fluid balance, BP trend<br>• Avoid fluid restriction until diagnosis confirmed';
+ } else {
+  dx = '❓ Indeterminate'; color = '#94a3b8';
+  confidence = 'Insufficient differentiation (Score: ' + score + ') — further workup needed';
+  management = '• <strong>FEUA</strong> (Fractional excretion of uric acid): &lt;10% = SIADH, &gt;10% = CSW<br>• <strong>NS challenge:</strong> Na rises → CSW; Na worsens → SIADH<br>• FENa &lt;0.5% — favours pre-renal/CSW<br>• Repeat serum + urine electrolytes after 12hr<br>• Consider endocrinology consult';
+ }
+
+ resBox.style.border    = '1px solid ' + color + '50';
+ resBox.style.background = color + '14';
+ diag.style.color        = color;
+ diag.textContent        = dx;
+ conf.style.color        = 'var(--text-muted)';
+ conf.textContent        = confidence;
+ mgmt.style.color        = 'var(--text)';
+ mgmt.innerHTML          = management;
+ } catch(e) {}
+}
+
+function applyTheme(theme) {
+ if (theme === 'light') {
+ document.body.setAttribute('data-theme', 'light');
+ // In light mode: show dark moon (to indicate "switch to dark")
+ document.getElementById('themeIconSun').style.display = 'none';
+ document.getElementById('themeIconMoon').style.display = 'block';
+ } else {
+ document.body.removeAttribute('data-theme');
+ // In dark mode: show bright sun (to indicate "switch to light")
+ document.getElementById('themeIconSun').style.display = 'block';
+ document.getElementById('themeIconMoon').style.display = 'none';
+ }
+}
+
+function toggleTheme() {
+ const current = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+ const next = current === 'light' ? 'dark' : 'light';
+ applyTheme(next);
+ try { localStorage.setItem('syringe-pump-theme', next); } catch (e) {}
+}
+
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(r => console.log('SW registered:', r.scope))
+      .catch(e => console.warn('SW failed:', e));
+  });
+}
+</script>
+</body>
+</html>
