@@ -1,8 +1,9 @@
-// ═══ iCU Calc — Service Worker ═══
-// Bump VERSION on every release so the app-shell cache is refreshed and
-// clients auto-update (index.html already listens for 'controllerchange'
-// and reloads once the new worker takes control).
-const VERSION = 'v4.0.5.13';
+// ═══ iCU Calc — Service Worker (v4, aggressive cache cleaner) ═══
+// Strategy: network-first for everything, so the app never gets stuck
+// showing stale HTML/icons/manifest while online. Cache is only a
+// fallback for offline use. Every activation nukes ANY cache that isn't
+// the current version — no accumulation of old app-shell caches ever.
+const VERSION = 'v4';
 const CACHE_NAME = 'icu-calc-' + VERSION;
 
 const APP_SHELL = [
@@ -20,6 +21,7 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
+  // Take over immediately, don't wait for old tabs to close.
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
@@ -28,56 +30,58 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(
-        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
+    (async () => {
+      // Aggressively wipe every cache that isn't this exact version —
+      // including caches from any earlier naming scheme.
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }));
+      await self.clients.claim();
+      // Force any open clients to pick up the new worker right away.
+      const clients = await self.clients.matchAll({ type: 'window' });
+      clients.forEach((client) => client.navigate(client.url));
+    })()
   );
+});
+
+// Let the page force an update check / immediate activation on demand.
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // Navigation requests (loading/relaunching the app): try network first
-  // so users get the newest app shell, fall back to cache when offline.
-  if (req.mode === 'navigate') {
+  const url = new URL(req.url);
+  const isSameOrigin = url.origin === self.location.origin;
+
+  // Network-first for navigations and same-origin app-shell files
+  // (HTML, manifest, icons): always try to get the freshest copy first,
+  // update the cache in the background, and only fall back to cache
+  // when the network is unreachable (offline).
+  if (req.mode === 'navigate' || isSameOrigin) {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              const key = req.mode === 'navigate' ? './index.html' : req;
+              cache.put(key, copy);
+            });
+          }
           return res;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() =>
+          caches.match(req.mode === 'navigate' ? './index.html' : req)
+        )
     );
     return;
   }
 
-  // Same-origin static assets (icons, manifest, css/js inlined in the
-  // shell): cache-first for instant loads, refreshing the cache quietly
-  // in the background whenever the network is available.
-  const url = new URL(req.url);
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(req).then((cached) => {
-        const network = fetch(req)
-          .then((res) => {
-            if (res && res.status === 200) {
-              const copy = res.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-            }
-            return res;
-          })
-          .catch(() => cached);
-        return cached || network;
-      })
-    );
-    return;
-  }
-
-  // Cross-origin (e.g. Google Fonts): network first, cache as fallback.
+  // Cross-origin (e.g. fonts/CDN): network first, cache as fallback.
   event.respondWith(
     fetch(req)
       .then((res) => {

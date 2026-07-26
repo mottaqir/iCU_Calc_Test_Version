@@ -194,6 +194,18 @@ body {
 /* Tab contents */
 .tab-content { display: none; padding: 6px 10px 12px; }
 .tab-content.active { display: block; flex: 1 0 auto; }
+/* Special Calc: "everything fits on one screen" via native flexbox instead of
+   JS pixel-measurement (which proved unreliable across real devices/browser-
+   chrome-settling timing). flex-shrink:0 on children below via default auto
+   basis keeps each row at its natural height; space-between distributes any
+   leftover room as gaps. If content is taller than the screen, flex-shrink:0
+   here lets #tab-special grow past 100dvh instead of squeezing content —
+   the page then just scrolls normally, no JS fallback-detection needed. */
+#tab-special.active {
+  display: flex; flex-direction: column; justify-content: space-between;
+  flex-shrink: 0;
+}
+#tab-special.active > * { flex-shrink: 0; }
 
 /* ── Formula Banner ── */
 .formula-banner {
@@ -1624,10 +1636,23 @@ ul.vent-facts code{
 .gcs-text { font-size: 12px; color: var(--text); }
 
 /* ── GCS compact 2-col grid (Eye / Verbal) ── */
-.gcs-opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.gcs-opt-grid .gcs-opt { padding: 5px 6px; gap: 6px; }
+.gcs-opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.gcs-opt-grid .gcs-opt { padding: 3px 6px; gap: 6px; }
 .gcs-opt-grid .gcs-score { font-size: 12px; width: 14px; }
-.gcs-opt-grid .gcs-text { font-size: 10.5px; line-height: 1.25; }
+.gcs-opt-grid .gcs-text { font-size: 10.5px; line-height: 1.2; }
+
+/* ── GCS Verbal Nonintubated/Intubated toggle ── */
+.gcs-sec-ico { display: inline-block; width: 15px; flex-shrink: 0; text-align: center; }
+.gcs-vmode-row {
+  display: inline-flex; align-items: center; gap: 5px; margin: 0 0 7px 21px;
+  border: 1px solid var(--accent-dim); border-radius: 4px; padding: 3px 7px;
+}
+.gcs-vmode-txt {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.1px; white-space: nowrap; flex-shrink: 0;
+  padding: 0; border: none; background: none; cursor: pointer; color: var(--text-faint);
+}
+.gcs-vmode-txt.active { color: var(--accent); }
+.gcs-vmode-sep { font-size: 9px; color: var(--text-faint); white-space: nowrap; flex-shrink: 0; }
 
 /* ── NEWS2 AVPU ── */
 .news-avpu-btn {
@@ -2740,12 +2765,12 @@ body:not([data-theme="light"]) .gs-bar { background: linear-gradient(90deg, #162
 
  <!-- ─── GCS ─── -->
  <div class="calc-card" id="calccard-gcs">
-  <div class="calc-title" onclick="toggleCalc('calccard-gcs')"><span class="calc-title-dot"></span><span>Glasgow Coma Scale (GCS)</span><button type="button" class="calc-pin" data-cid="calccard-gcs" onclick="event.stopPropagation(); toggleFavoriteCalc('calccard-gcs', this)" title="Pin to top" aria-label="Pin to top"><span class="calc-pin-icon">☆</span></button></div>
+  <div class="calc-title" onclick="toggleCalc('calccard-gcs')"><span class="calc-title-dot"></span><span>GCS <span style="color:var(--text-faint);font-weight:400">— Glasgow Coma Scale</span></span><button type="button" class="calc-pin" data-cid="calccard-gcs" onclick="event.stopPropagation(); toggleFavoriteCalc('calccard-gcs', this)" title="Pin to top" aria-label="Pin to top"><span class="calc-pin-icon">☆</span></button></div>
   <div class="calc-body" style="display:none">
 
    <!-- Eye -->
-   <div style="margin-bottom:10px">
-    <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">👁 Eye Opening (E)</div>
+   <div style="margin-bottom:7px">
+    <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">👁 Eye Opening (E)</div>
     <div class="gcs-opt-grid" id="gcs-eye-group">
      <label class="gcs-opt" onclick="gcsSelect('eye',4,this)"><span class="gcs-radio"></span><span class="gcs-score">4</span><span class="gcs-text">Spontaneous</span></label>
      <label class="gcs-opt" onclick="gcsSelect('eye',3,this)"><span class="gcs-radio"></span><span class="gcs-score">3</span><span class="gcs-text">To voice</span></label>
@@ -2755,20 +2780,32 @@ body:not([data-theme="light"]) .gs-bar { background: linear-gradient(90deg, #162
    </div>
 
    <!-- Verbal -->
-   <div style="margin-bottom:10px">
-    <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🗣 Verbal Response (V)</div>
-    <div class="gcs-opt-grid" id="gcs-verbal-group">
-     <label class="gcs-opt" onclick="gcsSelect('verbal',5,this)"><span class="gcs-radio"></span><span class="gcs-score">5</span><span class="gcs-text">Oriented</span></label>
-     <label class="gcs-opt" onclick="gcsSelect('verbal',4,this)"><span class="gcs-radio"></span><span class="gcs-score">4</span><span class="gcs-text">Confused</span></label>
-     <label class="gcs-opt" onclick="gcsSelect('verbal',3,this)"><span class="gcs-radio"></span><span class="gcs-score">3</span><span class="gcs-text">Inappropriate words</span></label>
-     <label class="gcs-opt" onclick="gcsSelect('verbal',2,this)"><span class="gcs-radio"></span><span class="gcs-score">2</span><span class="gcs-text">Incomprehensible sounds</span></label>
-     <label class="gcs-opt" onclick="gcsSelect('verbal',1,this)"><span class="gcs-radio"></span><span class="gcs-score">1</span><span class="gcs-text">None</span></label>
+   <div style="margin-bottom:7px">
+    <div style="display:flex;align-items:center;line-height:1;gap:6px;margin-bottom:2px"><span class="gcs-sec-ico">🗣</span><span id="gcs-verbal-head-txt" style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px">Verbal Response (V)</span></div>
+    <div class="gcs-vmode-row" id="gcs-vmode-box">
+     <button type="button" id="gcs-vmode-noninc" class="gcs-vmode-txt active" onclick="gcsSetVerbalMode('noninc')">non-Intubated</button>
+     <span class="gcs-vmode-sep">/</span>
+     <button type="button" id="gcs-vmode-int" class="gcs-vmode-txt" onclick="gcsSetVerbalMode('int')">Intubated</button>
+    </div>
+    <div id="gcs-verbal-group">
+     <div class="gcs-opt-grid" id="gcs-verbal-noninc">
+      <label class="gcs-opt" onclick="gcsSelect('verbal',5,this)"><span class="gcs-radio"></span><span class="gcs-score">5</span><span class="gcs-text">Oriented</span></label>
+      <label class="gcs-opt" onclick="gcsSelect('verbal',4,this)"><span class="gcs-radio"></span><span class="gcs-score">4</span><span class="gcs-text">Confused</span></label>
+      <label class="gcs-opt" onclick="gcsSelect('verbal',3,this)"><span class="gcs-radio"></span><span class="gcs-score">3</span><span class="gcs-text">Inappropriate words</span></label>
+      <label class="gcs-opt" onclick="gcsSelect('verbal',2,this)"><span class="gcs-radio"></span><span class="gcs-score">2</span><span class="gcs-text">Incomprehensible sounds</span></label>
+      <label class="gcs-opt" onclick="gcsSelect('verbal',1,this)"><span class="gcs-radio"></span><span class="gcs-score">1</span><span class="gcs-text">None</span></label>
+     </div>
+     <div class="gcs-opt-grid" id="gcs-verbal-int" style="display:none">
+      <label class="gcs-opt" onclick="gcsSelectVerbalT(5,this)"><span class="gcs-radio"></span><span class="gcs-score">5T</span><span class="gcs-text">Seems able to talk</span></label>
+      <label class="gcs-opt" onclick="gcsSelectVerbalT(3,this)"><span class="gcs-radio"></span><span class="gcs-score">3T</span><span class="gcs-text">Questionable ability to&nbsp;talk</span></label>
+      <label class="gcs-opt" onclick="gcsSelectVerbalT(1,this)"><span class="gcs-radio"></span><span class="gcs-score">1T</span><span class="gcs-text">Generally unresponsive</span></label>
+     </div>
     </div>
    </div>
 
    <!-- Motor -->
-   <div style="margin-bottom:10px">
-    <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">✊ Motor Response (M)</div>
+   <div style="margin-bottom:7px">
+    <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">✊ Motor Response (M)</div>
     <div class="gcs-opt-grid" id="gcs-motor-group">
      <label class="gcs-opt" onclick="gcsSelect('motor',6,this)"><span class="gcs-radio"></span><span class="gcs-score">6</span><span class="gcs-text">Obeys commands</span></label>
      <label class="gcs-opt" onclick="gcsSelect('motor',5,this)"><span class="gcs-radio"></span><span class="gcs-score">5</span><span class="gcs-text">Localises pain</span></label>
@@ -2784,11 +2821,11 @@ body:not([data-theme="light"]) .gs-bar { background: linear-gradient(90deg, #162
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
      <div>
       <div style="font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.4px">GCS Total</div>
-      <div style="font-size:36px;font-weight:900;color:var(--accent);line-height:1" id="gcs-total">—</div>
+      <div style="font-size:25px;font-weight:600;color:var(--accent);line-height:1" id="gcs-total">—</div>
      </div>
      <div style="text-align:right">
       <div style="font-size:10px;color:var(--text-faint);margin-bottom:4px">E + V + M</div>
-      <div style="font-size:13px;font-weight:700;color:var(--text-muted)" id="gcs-breakdown">— + — + —</div>
+      <div style="font-size:25px;font-weight:600;color:var(--text-muted);line-height:1;white-space:nowrap" id="gcs-breakdown">— — —</div>
      </div>
     </div>
     <div style="font-size:13px;font-weight:700;margin-top:4px" id="gcs-interp">Select all three components</div>
@@ -2797,7 +2834,7 @@ body:not([data-theme="light"]) .gs-bar { background: linear-gradient(90deg, #162
    <div class="note-box" style="margin-top:8px">
     <strong>Severity:</strong> Mild ≥13 · Moderate 9–12 · Severe ≤8<br>
     <strong>Intubation threshold:</strong> GCS ≤8 — "cannot protect airway"<br>
-    <strong>T suffix:</strong> If intubated/trached → append T (e.g. E2VTM4). Verbal = T, not scored.<br>
+    <strong>T suffix:</strong> If intubated, switch Verbal to "Intubated" above — the estimated score counts toward the total, marked with T (e.g. GCS 10T).<br>
     <strong>Minimum score:</strong> 3 (not 0). Max: 15.
    </div>
   </div>
@@ -10610,7 +10647,7 @@ var rdacDrugList = [
    note:'Reduce dose/frequency in hepatic impairment; avoid or use with caution in severe/active liver disease.' },
  { id:'voriconazoleOther', name:'Voriconazole', category:'Other', type:'note',
    note:'Halve maintenance dose in Child-Pugh A/B; avoid or use with extreme caution in Child-Pugh C.' },
- { id:'pirfenidone', name:'Pirfenidone', category:'Other', type:'note',
+ { id:'pirfenidone', name:'Pirfenidone (Pulfibro)', category:'Other', type:'note',
    note:'Dose reduction required in mild-moderate hepatic impairment; avoid in severe impairment.' }
 ];
 
@@ -13375,9 +13412,34 @@ function calcAPACHE() {
 
 // ─────────────────────── GCS ───────────────────────
 var gcsScores = { eye: null, verbal: null, motor: null };
+var gcsVerbalIntubated = false;
+
+function gcsSetVerbalMode(mode) {
+ const nonincBtn = document.getElementById('gcs-vmode-noninc');
+ const intBtn    = document.getElementById('gcs-vmode-int');
+ const nonincGrp = document.getElementById('gcs-verbal-noninc');
+ const intGrp    = document.getElementById('gcs-verbal-int');
+ if (nonincBtn) nonincBtn.classList.toggle('active', mode === 'noninc');
+ if (intBtn)    intBtn.classList.toggle('active', mode === 'int');
+ if (nonincGrp) nonincGrp.style.display = mode === 'noninc' ? '' : 'none';
+ if (intGrp)    intGrp.style.display = mode === 'int' ? '' : 'none';
+ // Switching modes clears whichever verbal score was selected, since the two
+ // scales aren't the same scoring rubric — avoids silently mixing them.
+ gcsScores.verbal = null;
+ gcsVerbalIntubated = (mode === 'int');
+ const group = document.getElementById('gcs-verbal-group');
+ if (group) group.querySelectorAll('.gcs-opt').forEach(o => o.classList.remove('selected'));
+ calcGCS();
+}
+
+function gcsSelectVerbalT(score, el) {
+ gcsVerbalIntubated = true;
+ gcsSelect('verbal', score, el);
+}
 
 function gcsSelect(component, score, el) {
  gcsScores[component] = score;
+ if (component === 'verbal' && el && !el.closest('#gcs-verbal-int')) gcsVerbalIntubated = false;
  const group = document.getElementById('gcs-' + component + '-group');
  if (group) group.querySelectorAll('.gcs-opt').forEach(o => o.classList.remove('selected'));
  if (el) el.classList.add('selected');
@@ -13390,20 +13452,32 @@ function calcGCS() {
  const bkEl    = document.getElementById('gcs-breakdown');
  const intEl   = document.getElementById('gcs-interp');
  const boxEl   = document.getElementById('gcs-result-box');
+ const vSuffix = gcsVerbalIntubated ? 'T' : '';
  if (e === null || v === null || m === null) {
   if (totalEl) totalEl.textContent = '—';
-  if (bkEl)   bkEl.textContent = (e||'—') + ' + ' + (v||'—') + ' + ' + (m||'—');
+  if (bkEl)   bkEl.innerHTML = 'E<sub>' + (e!==null?e:'—') + '</sub> V<sub>' + (v!==null?v+vSuffix:'—') + '</sub> M<sub>' + (m!==null?m:'—') + '</sub>';
   if (intEl)  { intEl.textContent = 'Select all three components'; intEl.style.color = 'var(--text-faint)'; }
   return;
  }
  const total = e + v + m;
- if (totalEl) totalEl.textContent = total;
- if (bkEl)   bkEl.textContent = 'E' + e + ' + V' + v + ' + M' + m;
+ if (totalEl) totalEl.textContent = total + vSuffix;
+ if (bkEl)   bkEl.innerHTML = 'E<sub>' + e + '</sub> V<sub>' + v + vSuffix + '</sub> M<sub>' + m + '</sub>';
  let label, color;
  if      (total >= 13) { label = '✅ Mild — GCS ' + total; color = '#10b981'; }
  else if (total >= 9)  { label = '🟡 Moderate — GCS ' + total; color = '#f59e0b'; }
- else if (total >= 4)  { label = '🔴 Severe — GCS ' + total + ' · Consider intubation'; color = '#ef4444'; }
- else                  { label = '🔴 GCS ' + total + ' · Immediate airway management'; color = '#ef4444'; }
+ else if (total >= 4)  {
+   label = gcsVerbalIntubated
+     ? '🔴 Severe — GCS ' + total + 'T · Already intubated — optimize sedation/ventilation'
+     : '🔴 Severe — GCS ' + total + ' · Consider intubation';
+   color = '#ef4444';
+ }
+ else {
+   label = gcsVerbalIntubated
+     ? '🔴 GCS ' + total + 'T · Already intubated — urgent neuro reassessment'
+     : '🔴 GCS ' + total + ' · Immediate airway management';
+   color = '#ef4444';
+ }
+ if (gcsVerbalIntubated && total >= 9) label += ' (V estimated — intubated)';
  if (intEl)  { intEl.textContent = label; intEl.style.color = color; }
  if (boxEl)  boxEl.style.borderColor = color + '60';
 }
@@ -13965,7 +14039,41 @@ function toggleCalc(id) {
   card.classList.toggle('is-expanded', !isOpen);
   if (chevron) chevron.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
   if (typeof scheduleSpecialCompactFit === 'function') scheduleSpecialCompactFit();
+  if (!isOpen && id === 'calccard-gcs' && typeof gcsAlignVerbalToggle === 'function') {
+    requestAnimationFrame(gcsAlignVerbalToggle);
+  }
 }
+
+/* The Non-intubated/Intubated toggle box under "Verbal Response (V)" is sized
+   in JS (not fixed CSS px) so its right edge lines up exactly under the
+   right edge of that heading text, whatever the heading actually measures
+   on this device/font. If the toggle's own text would overflow that width,
+   its font-size is nudged down (never below a legible floor) rather than
+   letting it clip or spill past the heading. */
+function gcsAlignVerbalToggle() {
+  const headTxt = document.getElementById('gcs-verbal-head-txt');
+  const box = document.getElementById('gcs-vmode-box');
+  if (!headTxt || !box) return;
+  const targetWidth = headTxt.getBoundingClientRect().width;
+  if (!targetWidth) return;
+  box.style.width = targetWidth + 'px';
+  const texts = box.querySelectorAll('.gcs-vmode-txt, .gcs-vmode-sep');
+  let fontSize = 9;
+  const minFont = 6.5;
+  texts.forEach(function (el) { el.style.fontSize = fontSize + 'px'; });
+  let guard = 0;
+  while (box.scrollWidth > box.clientWidth + 1 && fontSize > minFont && guard < 20) {
+    fontSize -= 0.3;
+    texts.forEach(function (el) { el.style.fontSize = fontSize.toFixed(2) + 'px'; });
+    guard++;
+  }
+}
+window.addEventListener('resize', function () {
+  const card = document.getElementById('calccard-gcs');
+  if (!card) return;
+  const body = card.querySelector('.calc-body');
+  if (body && body.style.display !== 'none') gcsAlignVerbalToggle();
+});
 
 /* ── Special Calc: compact "everything fits, no scroll" layout ──
    In its default collapsed state (nothing expanded), the Special Calc tab is
@@ -13976,74 +14084,21 @@ function toggleCalc(id) {
    so the whole list sits on one screen, no scrolling, on any phone size.
    The instant something is expanded it backs off completely and restores
    normal (scrollable) spacing, since expanded content can be arbitrarily tall. */
-var SPECIAL_COMPACT_ROW_IDS = [
-  'special-pinned-wrap', 'special-standalone-syringe',
-  'specialcat-scores', 'specialcat-criteria', 'specialcat-calculators',
-  'specialcat-correction', 'specialcat-assessment', 'special-standalone-glance'
-];
-var _specialCompactRaf = null;
-var _specialCompactRetryTimers = [];
-function scheduleSpecialCompactFit() {
-  if (_specialCompactRaf) cancelAnimationFrame(_specialCompactRaf);
-  _specialCompactRetryTimers.forEach(function (t) { clearTimeout(t); });
-  _specialCompactRetryTimers = [];
-  _specialCompactRaf = requestAnimationFrame(function () {
-    _specialCompactRaf = null;
-    fitSpecialCalcCompact();
-  });
-  // Mobile browser chrome (address bar collapsing/expanding) and pull-to-refresh
-  // are often still mid-animation the instant this fires, so a single
-  // measurement can be taken against a viewport height that hasn't settled yet
-  // (footer cut off, or missing entirely). Re-measure a few more times shortly
-  // after — cheap, and self-corrects once the real viewport size is stable.
-  [150, 350, 700, 1200].forEach(function (delay) {
-    _specialCompactRetryTimers.push(setTimeout(fitSpecialCalcCompact, delay));
-  });
-}
-window.addEventListener('pageshow', scheduleSpecialCompactFit);
-document.addEventListener('visibilitychange', function () {
-  if (document.visibilityState === 'visible') scheduleSpecialCompactFit();
-});
-function fitSpecialCalcCompact() {
-  var tab = document.getElementById('tab-special');
-  var tabBar = document.querySelector('.tab-bar');
-  var footer = document.querySelector('.app-footer');
-  if (!tab || !tabBar || !footer || !tab.classList.contains('active')) return;
-
-  var rows = SPECIAL_COMPACT_ROW_IDS
-    .map(function (id) { return document.getElementById(id); })
-    .filter(function (el) { return el && getComputedStyle(el).display !== 'none'; });
-  if (!rows.length) return;
-
-  // Any expanded card/category (pinned, syringe, glance, or a category list
-  // opened out) can be arbitrarily tall — let the tab scroll normally instead.
-  var expandedTopLevel = rows.some(function (el) {
-    return el.classList.contains('is-open') || !!el.querySelector('.calc-card.is-expanded, .special-cat.is-open');
-  });
-  if (expandedTopLevel) {
-    rows.forEach(function (r) { r.style.marginTop = ''; r.style.marginBottom = ''; });
-    return;
-  }
-
-  // Zero out spacing first so we measure each row's true unspaced height.
-  rows.forEach(function (r) { r.style.marginTop = '0px'; r.style.marginBottom = '0px'; });
-  var contentHeight = rows.reduce(function (sum, r) { return sum + r.getBoundingClientRect().height; }, 0);
-
-  var available = footer.getBoundingClientRect().top - tabBar.getBoundingClientRect().bottom;
-  var gapSlots = rows.length + 1; // gap above the first row, between each pair, and below the last
-  var minGap = 6;
-  var remaining = available - contentHeight;
-  var gap = remaining > 0 ? Math.max(minGap, Math.floor(remaining / gapSlots)) : minGap;
-
-  rows.forEach(function (r, i) {
-    r.style.marginTop = (i === 0 ? gap : 0) + 'px';
-    r.style.marginBottom = gap + 'px';
-  });
-}
-window.addEventListener('resize', scheduleSpecialCompactFit);
-window.addEventListener('orientationchange', scheduleSpecialCompactFit);
-if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleSpecialCompactFit);
-if (document.fonts && document.fonts.ready) { document.fonts.ready.then(scheduleSpecialCompactFit); }
+// ─── Special Calc "everything fits, no scroll" layout ───
+// This used to be done in JS: measure available space between the tab-bar
+// and footer, then set explicit pixel margins between rows. That one-shot
+// measurement proved unreliable on real devices (mobile browser chrome
+// collapsing/expanding, pull-to-refresh timing) — sometimes the footer was
+// cut off, sometimes missing entirely, sometimes a whole extra retry pass
+// still didn't catch it in time.
+// It's now handled natively by CSS flexbox instead (#tab-special.active in
+// the stylesheet): the browser redistributes the gaps itself on every
+// resize/orientation change/font-load, instantly and correctly, with no JS
+// measurement involved at all. These two functions are kept as no-ops purely
+// so the existing call sites elsewhere (toggleCalc, showTab, pin toggles,
+// resize/orientation listeners, etc.) don't throw errors.
+function scheduleSpecialCompactFit() {}
+function fitSpecialCalcCompact() {}
 
 /* ── Special Calc: Pin / Favorite system ── */
 var SPECIAL_FAV_KEY = 'special-calc-favs-v1';
