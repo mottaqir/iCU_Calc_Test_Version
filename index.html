@@ -15024,6 +15024,16 @@ function gsGetTitle(el) {
   return null;
 }
 
+function gsFindTabBtn(card, scope, name) {
+  if (!card) return null;
+  var btns = card.querySelectorAll(':scope > .gl-sub-body > .gl-tabs > .gl-tab');
+  for (var i = 0; i < btns.length; i++) {
+    var oc = btns[i].getAttribute('onclick') || '';
+    if (oc.indexOf("glTab('" + scope + "','" + name + "'") !== -1) return btns[i];
+  }
+  return null;
+}
+
 function gsBuildIndex() {
   gsIndex = [];
   document.querySelectorAll(gsCardSelector).forEach(function (el) {
@@ -15033,7 +15043,10 @@ function gsBuildIndex() {
     var tabEl = el.closest('.tab-content');
     var tabName = tabEl ? tabEl.id.replace('tab-', '') : null;
     if (!tabName) return;
-    gsIndex.push({ title: title, id: el.id, tab: tabName, tag: gsTagFor(tabName), sub: null });
+    // Body text is captured too (not just the title) so a search for a term
+    // mentioned inside the card's content — e.g. "intubation" in a GCS note —
+    // still surfaces it, even when that word isn't in the card's own title.
+    gsIndex.push({ title: title, id: el.id, tab: tabName, tag: gsTagFor(tabName), sub: null, keywords: el.textContent.toLowerCase() });
   });
   // Granular: individual HTN drugs inside category cards
   document.querySelectorAll('.aht-drug-row .aht-drug-name').forEach(function (nameEl) {
@@ -15057,6 +15070,58 @@ function gsBuildIndex() {
     var normEl = clone.querySelector('.ucv-normal');
     if (normEl) normEl.remove();
     gsIndex.push({ title: clone.textContent.trim(), el: row, tab: tabName, tag: gsTagFor(tabName), sub: 'Unit Converter' });
+  });
+  // Granular: individual drugs/options inside Status Epilepticus (each lives in
+  // its own inner gl-tab — e.g. Lorazepam is only visible on the "5-20" tab —
+  // so the matching outer tab button is stored to be clicked before scrolling.
+  document.querySelectorAll('.se-drug-row .se-drug-name').forEach(function (nameEl) {
+    var row = nameEl.closest('.se-drug-row');
+    var panel = nameEl.closest('.gl-panel');
+    var card = nameEl.closest('.gl-sub-card');
+    if (!row || !panel || !card) return;
+    var tabEl = row.closest('.tab-content');
+    var tabName = tabEl ? tabEl.id.replace('tab-', '') : null;
+    if (!tabName) return;
+    var panelName = panel.id.replace('gl-se-', '');
+    var clone = nameEl.cloneNode(true);
+    clone.querySelectorAll('em').forEach(function (x) { x.remove(); });
+    gsIndex.push({
+      title: clone.textContent.trim(), el: row, tab: tabName, tag: gsTagFor(tabName),
+      sub: gsGetTitle(card), tabBtn: gsFindTabBtn(card, 'se', panelName)
+    });
+  });
+  // Granular: individual organisms inside the Antibiotic Coverage card
+  // (lives on the "Organism" inner tab, so switch to it before scrolling).
+  document.querySelectorAll('#gls-abx-body .abx-org-name').forEach(function (nameEl) {
+    var row = nameEl.closest('.abx-org-row');
+    var card = nameEl.closest('.gl-sub-card');
+    if (!row || !card) return;
+    var tabEl = row.closest('.tab-content');
+    var tabName = tabEl ? tabEl.id.replace('tab-', '') : null;
+    if (!tabName) return;
+    gsIndex.push({
+      title: nameEl.textContent.trim(), el: row, tab: tabName, tag: gsTagFor(tabName),
+      sub: gsGetTitle(card), tabBtn: gsFindTabBtn(card, 'abx', 'lookup')
+    });
+  });
+  // Granular: individual diseases inside Haematology at a Glance (CBC card's
+  // "Haematology at a Glance" inner tab). The disease sits behind a closed
+  // dropdown, so selecting it and scrolling to the rendered rows below is far
+  // more useful than scrolling to the (hidden) dropdown option itself.
+  document.querySelectorAll('#hg-dd-panel .hg-dd-option').forEach(function (optEl) {
+    var card = optEl.closest('.gl-sub-card');
+    if (!card) return;
+    var tabEl = optEl.closest('.tab-content');
+    var tabName = tabEl ? tabEl.id.replace('tab-', '') : null;
+    if (!tabName) return;
+    var m = (optEl.getAttribute('onclick') || '').match(/hgSetDisease\('([^']+)'\)/);
+    var diseaseId = m ? m[1] : null;
+    gsIndex.push({
+      title: optEl.textContent.trim(), el: optEl, tab: tabName, tag: gsTagFor(tabName),
+      sub: 'Haematology at a Glance', tabBtn: gsFindTabBtn(card, 'cbc', 'haem'),
+      preAction: diseaseId ? function () { hgSetDisease(diseaseId); } : null,
+      scrollTarget: document.getElementById('hg-rows')
+    });
   });
 }
 
@@ -15118,9 +15183,17 @@ function gsSearch(q) {
     gsCurrentMatches = [];
     return;
   }
-  var matches = gsIndex.filter(function (item) {
-    return item.title.toLowerCase().indexOf(q) !== -1;
-  }).slice(0, 10);
+  // Title matches rank first (strongest, most precise signal); body/keyword
+  // matches (a term mentioned inside the card but not in its title) fill any
+  // remaining slots after that, so a specific card name never gets pushed
+  // out of the top 10 by a looser body-text match.
+  var titleMatches = [];
+  var bodyMatches = [];
+  gsIndex.forEach(function (item) {
+    if (item.title.toLowerCase().indexOf(q) !== -1) { titleMatches.push(item); return; }
+    if (item.keywords && item.keywords.indexOf(q) !== -1) bodyMatches.push(item);
+  });
+  var matches = titleMatches.concat(bodyMatches).slice(0, 10);
   gsCurrentMatches = matches;
   if (matches.length === 0) {
     results.innerHTML = '<div class="gs-empty">No matches found</div>';
@@ -15165,10 +15238,15 @@ function gsNavigateToItem(item) {
     var target = item.id ? document.getElementById(item.id) : item.el;
     if (!target) return;
     gsOpenChain(target);
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Switch to the item's inner gl-tab (if it lives on one) before doing
+    // anything else, since the target may be hidden behind an inactive tab.
+    if (item.tabBtn) item.tabBtn.click();
+    if (item.preAction) item.preAction();
+    var scrollTarget = item.scrollTarget || target;
+    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(function () {
-      target.classList.add('gs-highlight');
-      setTimeout(function () { target.classList.remove('gs-highlight'); }, 2300);
+      scrollTarget.classList.add('gs-highlight');
+      setTimeout(function () { scrollTarget.classList.remove('gs-highlight'); }, 2300);
     }, 320);
   }, 130);
 }
