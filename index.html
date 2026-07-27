@@ -4,6 +4,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<script>
+  // Sets --app-vh from the real, live viewport height (see body's min-height
+  // in the stylesheet below for why). Runs immediately — before first paint —
+  // and again on every event that can change the effective viewport size.
+  (function () {
+    function setAppVh() {
+      var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+      document.documentElement.style.setProperty('--app-vh', (h / 100) + 'px');
+    }
+    setAppVh();
+    window.addEventListener('resize', setAppVh);
+    window.addEventListener('orientationchange', setAppVh);
+    window.addEventListener('pageshow', setAppVh);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') setAppVh(); });
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', setAppVh);
+  })();
+</script>
 <title>iCU Calc</title>
 
 <!-- ═══ PWA ═══ -->
@@ -131,6 +148,14 @@ body {
   padding-right: env(safe-area-inset-right);
   display: flex; flex-direction: column;
   min-height: 100vh; min-height: 100dvh;
+  /* Some mobile browsers report a briefly-stale 100dvh right after certain
+     navigation events (pull-to-refresh in particular), which can push the
+     footer out of view until the next resize. --app-vh is measured directly
+     from JS (window.visualViewport/innerHeight) and re-set on load, resize,
+     orientationchange, pageshow, and visibilitychange, so it self-corrects
+     immediately rather than waiting on the browser's own dvh recalculation.
+     Falls back to 100dvh above until the JS below has run at least once. */
+  min-height: calc(var(--app-vh, 1dvh) * 100);
 }
 
 /* ── App Header ── */
@@ -197,12 +222,15 @@ body {
 /* Special Calc: "everything fits on one screen" via native flexbox instead of
    JS pixel-measurement (which proved unreliable across real devices/browser-
    chrome-settling timing). flex-shrink:0 on children below via default auto
-   basis keeps each row at its natural height; space-between distributes any
-   leftover room as gaps. If content is taller than the screen, flex-shrink:0
-   here lets #tab-special grow past 100dvh instead of squeezing content —
-   the page then just scrolls normally, no JS fallback-detection needed. */
+   basis keeps each row at its natural height; space-evenly distributes any
+   leftover room as gaps — including the gap before the first row and after
+   the last one (space-between would leave those two at zero and dump all the
+   slack into the middle gaps only, which looked disproportionate). If content
+   is taller than the screen, flex-shrink:0 here lets #tab-special grow past
+   100dvh instead of squeezing content — the page then just scrolls normally,
+   no JS fallback-detection needed. */
 #tab-special.active {
-  display: flex; flex-direction: column; justify-content: space-between;
+  display: flex; flex-direction: column; justify-content: space-evenly;
   flex-shrink: 0;
 }
 #tab-special.active > * { flex-shrink: 0; }

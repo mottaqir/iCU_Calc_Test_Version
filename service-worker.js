@@ -1,9 +1,9 @@
-// ═══ iCU Calc — Service Worker (v4, aggressive cache cleaner) ═══
+// ═══ iCU Calc — Service Worker (v5, aggressive cache cleaner) ═══
 // Strategy: network-first for everything, so the app never gets stuck
 // showing stale HTML/icons/manifest while online. Cache is only a
 // fallback for offline use. Every activation nukes ANY cache that isn't
 // the current version — no accumulation of old app-shell caches ever.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE_NAME = 'icu-calc-' + VERSION;
 
 const APP_SHELL = [
@@ -37,10 +37,16 @@ self.addEventListener('activate', (event) => {
       await Promise.all(keys.map((key) => {
         if (key !== CACHE_NAME) return caches.delete(key);
       }));
+      // clients.claim() alone is enough for this new worker to start
+      // controlling already-open pages (their next fetch/navigation
+      // routes through it) — no explicit reload needed. Forcing
+      // client.navigate(client.url) here used to fire a second, SW-driven
+      // reload on top of whatever navigation the user/browser was already
+      // doing (e.g. a pull-to-refresh), and two overlapping navigations to
+      // the same window can tear the render — which is the most likely
+      // explanation for the duplicated rows / stretched-then-scrollable
+      // layout seen right after pull-to-refresh.
       await self.clients.claim();
-      // Force any open clients to pick up the new worker right away.
-      const clients = await self.clients.matchAll({ type: 'window' });
-      clients.forEach((client) => client.navigate(client.url));
     })()
   );
 });
