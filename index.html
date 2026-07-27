@@ -533,7 +533,7 @@ input[type=range]::-moz-range-progress {
    treatment as the tool cards above, so this wrapper behaves like a normal calc-body. */
 
 /* ── Special Calc: category groups ── */
-.special-cat { margin-bottom: 20px; }
+.special-cat { margin-bottom: 0; }
 .special-cat-header {
   display: flex; align-items: center; gap: 11px;
   padding: 11px 2px; border-radius: 4px;
@@ -2589,12 +2589,12 @@ body:not([data-theme="light"]) .gs-bar { background: linear-gradient(90deg, #162
 <div id="tab-special" class="tab-content">
 
  <!-- ═══ Pinned/Favorited cards land here, in the user's pin order ═══ -->
- <div id="special-pinned-wrap" style="display:none;margin-bottom:8px">
+ <div id="special-pinned-wrap" style="display:none">
   <div id="special-pinned-body"></div>
  </div>
 
  <!-- ═══ Syringe Pump: standalone, above all categories ═══ -->
- <div id="special-standalone-syringe" style="margin-bottom:20px"></div>
+ <div id="special-standalone-syringe"></div>
 
  <!-- ─── Syringe Pump Dose Calculator ─── -->
  <div class="calc-card" id="calccard-syringe">

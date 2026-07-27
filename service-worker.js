@@ -1,9 +1,9 @@
-// ═══ iCU Calc — Service Worker (v5, aggressive cache cleaner) ═══
+// ═══ iCU Calc — Service Worker (v6, aggressive cache cleaner) ═══
 // Strategy: network-first for everything, so the app never gets stuck
 // showing stale HTML/icons/manifest while online. Cache is only a
 // fallback for offline use. Every activation nukes ANY cache that isn't
 // the current version — no accumulation of old app-shell caches ever.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE_NAME = 'icu-calc-' + VERSION;
 
 const APP_SHELL = [
@@ -88,11 +88,16 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Cross-origin (e.g. fonts/CDN): network first, cache as fallback.
+  // Only cache successful, cacheable responses — an error response (4xx/5xx)
+  // or an unusable opaque-redirect must never overwrite a good cached copy,
+  // otherwise a transient failure "poisons" the offline fallback permanently.
   event.respondWith(
     fetch(req)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        if (res && (res.status === 200 || res.type === 'opaque') && res.type !== 'opaqueredirect') {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
         return res;
       })
       .catch(() => caches.match(req))
