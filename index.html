@@ -3257,6 +3257,27 @@ try { if (navigator.standalone === true) document.documentElement.classList.add(
  <div class="note-box">Bolus: 1mcg/kg (0.3&ndash;1.5) | Onset 2-5min | Duration 30-60min | 1 amp = 2ml = 100mcg</div>
  </div>
  </div>
+ <div class="drug-card" id="card-remi">
+ <div class="drug-header" onclick="toggleCard('remi')">
+ <div class="drug-dot" style="color:#58a6ff"></div>
+ <div style="flex:1"><div class="drug-name">Remifentanil</div><div class="drug-dilution">(2mg vial + 2ml WFI) + 38ml NS &rarr; 40ml<br>Conc: 50mcg/ml&nbsp;|&nbsp;<span class="kcl-mmolhr"><span class="conc-hr" data-k="remi">&mdash;</span> mcg/hr</span></div></div>
+ <div class="drug-rate-preview"><div class="rate-caption">S/P rate</div><div class="rate-line"><div class="rate-num" style="color:#58a6ff" id="rate-remi">&mdash;</div><div class="rate-unit">ml/hr</div></div></div>
+ </div>
+ <div class="drug-body">
+ <div class="card-wt-row">
+ <div class="dose-label"><span>Weight</span><span class="dose-val" style="color:#60a5fa"><span id="cwt-val-remi">60</span> kg</span></div>
+ <input type="range" id="cwt-remi" min="0.5" max="150" step="0.5" value="60" oninput="cwtSync('remi',this.value)" style="accent-color:#60a5fa">
+</div>
+
+ <div class="dose-row">
+ <div class="dose-label"><span>Dose</span><span class="dose-val" style="color:#58a6ff"><span id="dv-remi">5.0</span> mcg/kg/hr</span></div>
+ <input type="range" id="range-remi" min="0.5" max="15" step="0.5" value="5" oninput="calcInfusion('remi',this.value,1,50,'mcg/kg/hr')" style="accent-color:#58a6ff">
+ <div class="range-limits"><span>0.5</span><span>15</span></div>
+ </div>
+ <div class="note-box">Loading: 1.5mcg/kg (routine bolus not recommended in ICU) | Infusion: 0.5&ndash;15mcg/kg/hr | Onset ~1min; effect lost within 10min of stopping | No renal/hepatic dose adjustment | Abrupt stop can precipitate opioid withdrawal &mdash; combine with a longer-acting opioid | Lyophilized powder &mdash; never give undiluted<span style="display:block;height:8px"></span><b>Start low, titrate slow, no routine bolus, continuous cardiorespiratory monitoring &mdash; transition analgesia ready before you stop.</b></div>
+ <div class="note-box"><b>Key warnings</b><span style="display:block;height:4px"></span>&bull; <b>Hypotension &amp; bradycardia:</b> risk rises with propofol, beta-blocker, CCB or shock. Reduce infusion, fluid/vasopressor, consider anticholinergic.<br>&bull; <b>Rapid offset / rebound pain:</b> effect gone within 5&ndash;10min of stopping. Have fentanyl, morphine or another analgesic ready before extubation/transition.<br>&bull; <b>Not a sedative:</b> if restless despite adequate analgesia, reassess hypnotic requirement before increasing; excess opioid raises respiratory depression &amp; delirium risk.<span style="display:block;height:8px"></span><b>Monitoring</b><span style="display:block;height:4px"></span>Continuous SpO&#8322;, ECG, BP, RR/ventilator waveform, sedation-agitation &amp; pain score (CPOT/BPS) &mdash; closely at initiation, after titration/bolus, and when a sedative is changed.<span style="display:block;height:8px"></span><b>Contraindications / cautions</b><span style="display:block;height:4px"></span><span style="color:#ef4444">CI:</span> hypersensitivity to remifentanil, fentanyl analogues or excipient. Caution: other opioid hypersensitivity (cross-reactivity), severe hypovolaemia/shock, high ICP with unstable haemodynamics, significant bradycardia/heart block &mdash; lower starting dose, slow titration. Continuous use &gt;3 days in ventilated patients generally not recommended &mdash; transition to a longer-acting opioid.</div>
+ </div>
+ </div>
  <div class="drug-card" id="card-dex">
  <div class="drug-header" onclick="toggleCard('dex')">
  <div class="drug-dot" style="color:#58a6ff"></div>
@@ -13355,6 +13376,7 @@ const bolusData = [
  // ── Sedation & Analgesia ──
  { name:"Midazolam", group:"Sedation & Analgesia", cat:"Sedation", color:"#58a6ff", amp:"5mg/5cc OR 15mg/3cc amp", doseMin:0.02, doseMax:0.1, unit:"mg/kg slow IV", onset:"2-3 min", duration:"15-30 min", note:"IV bolus slowly over 2 min | Titrate to effect | Reduce dose in elderly & hepatic impairment" },
  { name:"Fentanyl", group:"Sedation & Analgesia", cat:"Analgesia", color:"#58a6ff", amp:"1 amp = 2ml = 100mcg", doseMin:0.3, doseMax:1.5, unit:"mcg/kg slow IV", onset:"2-5 min", duration:"30-60 min", note:"Give slowly over 3-5 min | Bolus: 0.3-1.5mcg/kg | Reduce in elderly & renal impairment" },
+ { name:"Remifentanil", group:"Sedation & Analgesia", cat:"Analgesia", color:"#58a6ff", amp:"2mg vial (lyophilized powder)", doseMin:1.5, doseMax:1.5, unit:"mcg/kg slow IV", doseColor:"#ef4444", onset:"~1 min", duration:"5-10 min", note:"Prep: (2mg vial + 2ml WFI) + 38ml NS &rarr; 40ml = 50mcg/ml &mdash; never give undiluted<br>&#9888;&#65039; <b>Routine bolus is not recommended in ICU</b> &mdash; use infusion (see Infusion Drugs tab). Dose shown is the loading dose (1.5mcg/kg), followed by continuous infusion<br>If a bolus is unavoidable: give slow IV over &ge;30sec with NMB &amp; ventilation backup ready (chest-wall rigidity can make ventilation impossible) | Respiratory depression/apnea, hypotension &amp; bradycardia &mdash; continuous SpO&#8322;, ECG, BP | Effect gone 5&ndash;10min after stopping &mdash; have transition analgesia ready | <span style='color:#ef4444'>CI:</span> hypersensitivity to remifentanil, fentanyl analogues or excipient" },
  { name:"Propofol", group:"Sedation & Analgesia", cat:"Sedation", color:"#58a6ff", amp:"200mg/20ml vial (10mg/ml)", doseMin:1, doseMax:2.5, unit:"mg/kg", onset:"60 sec", duration:"-", note:"For 70kg: 70-175mg" },
  // ── Induction & Neuromuscular Blockers (RSI) ──
  { name:"Ketamine", group:"Induction & NMB (RSI)", cat:"Induction / Dissociative", color:"#ef4444", amp:"500mg/10ml vial (50mg/ml)", doseMin:1, doseMax:2, unit:"mg/kg IV induction", onset:"30-60 sec", duration:"10-15 min", note:"RSI/induction: 1-2mg/kg IV | Sub-dissociative analgesia: 0.1-0.3mg/kg IV | Preferred in haemodynamic instability, bronchospasm/asthma | Raises BP &amp; HR — caution in IHD, uncontrolled HTN | Emergence reactions — co-administer Midazolam | <span style='color:#ef4444'>CI:</span> severe uncontrolled hypertension, eclampsia" },
@@ -13585,7 +13607,7 @@ bolusData.forEach((d, i) => {
   : d.headerLabel
   ? `<div style="text-align:right"><div style="font-size:13px;font-weight:400;color:${d.color}">${d.headerLabel}</div><div style="font-size:10px;color:var(--text-faint)">${d.unit}</div></div>`
   : d.doseMin !== null
-  ? `<div style="text-align:right"><div style="font-size:13px;font-weight:400;color:${d.color}" id="bc-head-${i}">${doseText}</div><div style="font-size:10px;color:var(--text-faint)">${d.unit}</div></div>`
+  ? `<div style="text-align:right"><div style="font-size:13px;font-weight:400;color:${d.doseColor||d.color}" id="bc-head-${i}">${doseText}</div><div style="font-size:10px;color:var(--text-faint)">${d.unit}</div></div>`
   : '';
  const nameSize = 'font-size:12px';
  const rightSize = 'font-size:12px';
@@ -14058,6 +14080,7 @@ function updateAll() {
   if (g('range-dopa')) calcInfusion('dopa', g('range-dopa'), 60, 8000, 'mcg/kg/min');
   if (g('range-dobu')) calcInfusion('dobu', g('range-dobu'), 60, 10000, 'mcg/kg/min');
   if (g('range-fent')) calcInfusion('fent', g('range-fent'), 1, 10, 'mcg/kg/hr');
+  if (g('range-remi')) calcInfusion('remi', g('range-remi'), 1, 50, 'mcg/kg/hr');
   if (g('range-dex')) calcInfusion('dex', g('range-dex'), 1, 4, 'mcg/kg/hr');
   if (g('range-labet')) calcInfusion('labet', g('range-labet'), 60, 2000, 'mcg/kg/min');
   if (g('range-prop')) calcInfusion('prop', g('range-prop'), 1, 10, 'mg/kg/hr');
@@ -14515,6 +14538,8 @@ var rdacDrugList = [
    note:'Toxic metabolite normeperidine accumulates and can cause seizures — generally avoid in renal impairment regardless of CrCl.' },
  { id:'fentanyl', name:'Fentanyl', category:'Analgesics / Sedatives', type:'note',
    note:'No fixed dose reduction required — hepatically metabolized to inactive metabolites. Still titrate to effect and use caution with prolonged infusions.' },
+ { id:'remifentanil', name:'Remifentanil', category:'Analgesics / Sedatives', type:'note',
+   note:'Metabolized by non-specific plasma/tissue esterases — no dose adjustment needed in renal impairment, including ICU patients and renal replacement therapy. The carboxylic acid metabolite accumulates but is ~1/4600 as potent (not clinically relevant for infusions up to 3 days). Still titrate to effect; severe hepatic impairment may be slightly more sensitive to respiratory depression.' },
  { id:'sotalol', name:'Sotalol', category:'Cardiac', type:'calc' },
  { id:'digoxin', name:'Digoxin', category:'Cardiac', type:'note',
    note:'Loading dose is unchanged; maintenance dose is individualized from CrCl via a continuous formula and drug levels (narrow therapeutic index) rather than a fixed bracket — check level before redosing.' },
@@ -14547,6 +14572,7 @@ var rdacShortInfo = {
  morphine:     { tag:'renal',   reason:'active metabolite accumulates' },
  meperidine:   { tag:'avoid',   reason:'avoid — toxic metabolite (seizures)' },
  fentanyl:     { tag:'hepatic', reason:'hepatic metabolism, no fixed renal cut' },
+ remifentanil: { tag:'none',    reason:'esterase metabolism — no renal adjustment' },
  sotalol:      { tag:'renal',   reason:'interval extended; avoid if CrCl <10' },
  digoxin:      { tag:'renal',   reason:'level-guided maintenance dose' },
  allopurinol:  { tag:'renal',   reason:'dose reduced by CrCl' },
@@ -19098,6 +19124,8 @@ var DEFIB_GAP_MIN = 6;
 var DEFIB_TITLE_PAD_CUT_MAX = 9;      // EXPERIMENT (iPhone SE fit): a screen that needs up to this much title-padding squeeze (11px -> 2px) still fits without scrolling. Revert = 7
 var DEFIB_TITLE_PAD_CUT_TIGHT = 2;    /* the "tight" look the S23 ends up with (title padding 9px, card margins 0). A screen that needs MORE than the max
    above (iPhone SE with the ECG sheet open) keeps exactly this tight spacing and the page scrolls, instead of jumping back to the roomy 6px-gap layout. */
+var DEFIB_PIN_CAPSULE_GAP = 12.9;   // eyebrow -> capsule and capsule -> 1st card never get smaller than this (px of visible gap; the S23 look)
+var DEFIB_PIN_SHEET_GAP = 14.3;     // each half-gap above / below the ECG infographic never gets smaller than this
 var defibGapRaf = null;
 var defibBase = null;   // the "primary view" fit (everything collapsed): { gap, cut, squeezed, mean, w, h } — reused while anything is expanded so the card gaps never change
 
@@ -19385,16 +19413,25 @@ function syncDefibGaps() {
     var ecgCardEl = document.getElementById('calccard-ecgemerg');
     var ecgCollapsed = !!(ecgCardEl && !ecgCardEl.classList.contains('is-expanded'));   // "10 ECG Emergencies" fully collapsed: every slot equal, capsule included
     if (gaps.length > 2 && restW > 0 && !ecgCollapsed) {
+      /* Slots that are ALREADY small and must stay as they are on any squeezed fit: eyebrow -> capsule, capsule -> 1st card, and the two
+         halves around the ECG infographic. They keep at least their S23 look (DEFIB_PIN_*), and everything left over is shared
+         equally by the slots from the 2nd card down to the footer. Roomier screens are untouched: their half-gaps are already bigger. */
       var half = mean / 2;
-      var capMin = (window.HDR_GAP_BOT || 8) + 3;   // keep the capsule's top edge clear of the header's bottom edge even on very tight fits
-      var t0 = Math.max(half, capMin, gaps[0] - cur[0] + los[0]);
-      var t1 = Math.max(half, gaps[1] - cur[1] + los[1]);
-      var rest = (mean * wsum - t0 - t1) / restW;   // common gap for every slot from the 1st card to the footer
-      var restOk = isFinite(rest);
-      for (var r = 2; restOk && r < gaps.length; r++) if (rest * wts[r] < gaps[r] - cur[r] + los[r] - 0.01) restOk = false;
+      var sheetIdx = -1;
+      for (var si = 0; si < els.length; si++) if (els[si] && els[si].id === 'ecgEmergImgWrap') sheetIdx = si;
+      var pinned = {};
+      pinned[0] = Math.max(half, DEFIB_PIN_CAPSULE_GAP, gaps[0] - cur[0] + los[0]);
+      pinned[1] = Math.max(half, DEFIB_PIN_CAPSULE_GAP, gaps[1] - cur[1] + los[1]);
+      var rest0 = (mean * wsum - pinned[0] - pinned[1]) / restW;   // the plain half-gap result, used only to see whether the sheet halves are roomy already
+      if (sheetIdx >= 0) for (var pk = sheetIdx; pk <= sheetIdx + 1 && pk < gaps.length; pk++)
+        pinned[pk] = Math.max(rest0 * wts[pk], DEFIB_PIN_SHEET_GAP, gaps[pk] - cur[pk] + los[pk]);
+      var pinSum = 0, pinW = 0;
+      Object.keys(pinned).forEach(function (kx) { pinSum += pinned[kx]; pinW += wts[kx]; });
+      var rest = (mean * wsum - pinSum) / (wsum - pinW);   // common gap for every other slot (2nd card -> footer)
+      var restOk = isFinite(rest) && wsum - pinW > 0;
+      for (var r = 2; restOk && r < gaps.length; r++) if (!(r in pinned) && rest * wts[r] < gaps[r] - cur[r] + los[r] - 0.01) restOk = false;
       if (restOk) {
-        tgt[0] = t0; tgt[1] = t1;
-        for (var r2 = 2; r2 < gaps.length; r2++) tgt[r2] = rest * wts[r2];
+        for (var r2 = 0; r2 < gaps.length; r2++) tgt[r2] = (r2 in pinned) ? pinned[r2] : rest * wts[r2];
       }
     }
     var nxt = cur.map(function (c, idx) { return c + tgt[idx] - gaps[idx]; });
@@ -20292,6 +20329,7 @@ const DRUGS = [
   {id:'midazolam',name:'Midazolam',                        cat:'Sedation/Analgesia',   amt:50,  amtU:'mg',   vol:50,  doseU:'mg/hr',      lo:1,    hi:10,   note:'Accumulates in renal/hepatic failure and obesity — risk of prolonged sedation.'},
   {id:'propofol', name:'Propofol',                         cat:'Sedation/Analgesia',   amt:500, amtU:'mg',   vol:50,  doseU:'mcg/kg/min', lo:5,    hi:50,   note:'Watch for Propofol Infusion Syndrome with high-dose/prolonged use.'},
   {id:'fentanyl', name:'Fentanyl',                          cat:'Sedation/Analgesia',   amt:2500,amtU:'mcg',  vol:50,  doseU:'mcg/hr',     lo:25,   hi:200,  note:'Titrate to validated pain/sedation scale (e.g. CPOT, RASS).'},
+  {id:'remifentanil',name:'Remifentanil',                   cat:'Sedation/Analgesia',   amt:2,   amtU:'mg',   vol:40,  doseU:'mcg/kg/hr', lo:0.5,hi:15, rangeNote:'Usual ICU range: 0.5–15 mcg/kg/hr (loading dose 1.5 mcg/kg). Usual dilution: 2 mg in 40 ml = 50 mcg/ml.', note:'Bolus not recommended in ICU. Effect gone 5–10 min after stopping — have transition analgesia ready. Titrate to validated pain/sedation scale (e.g. CPOT, RASS).'},
   {id:'morphine', name:'Morphine',                          cat:'Sedation/Analgesia',   amt:50,  amtU:'mg',   vol:50,  doseU:'mg/hr',      lo:1,    hi:10,   note:'Active metabolites accumulate in renal failure.'},
   {id:'dexmed',   name:'Dexmedetomidine',                   cat:'Sedation/Analgesia',   amt:400, amtU:'mcg',  vol:50, doseU:'mcg/kg/hr',  lo:0.2,  hi:1.5,  note:'No loading dose typically used in ICU sedation; watch for bradycardia/hypotension.'},
   {id:'ketamine', name:'Ketamine (sedation infusion)',      cat:'Sedation/Analgesia',   amt:500, amtU:'mg',   vol:50,  doseU:'mg/kg/hr',   lo:0.1,  hi:0.5,  note:'Sub-dissociative analgesic doses are lower; monitor for emergence reactions.'},
