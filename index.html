@@ -32,20 +32,20 @@
    Height = wordmark+eyebrow block. */
 .theme-toggle{--tg-top:calc(8px*var(--hz,1));--tg-h:calc(38.06px*var(--hz,1) - 8.5px);--bw:1.25px;--ol:rgba(255,255,255,.72);--ink:#1b2f3d;--sun:#ffd814;box-sizing:border-box;position:relative;align-self:flex-start;width:var(--tg-h);height:var(--tg-h);margin-top:var(--tg-top);margin-bottom:calc(34px*var(--hz,1) - var(--tg-h) - var(--tg-top));padding:0;border:var(--bw) solid var(--ol);border-radius:21%;background:transparent;box-shadow:none;justify-content:flex-start;font-size:0}
 html[data-theme=light] .theme-toggle{--ol:rgba(27,47,61,.85);border:var(--bw) solid var(--ol);border-radius:21%;background:transparent;box-shadow:none}
-.theme-toggle .tsw{position:absolute;left:0;top:0;width:100%;height:100%;display:block;overflow:visible;pointer-events:none}
+.theme-toggle .tsw{position:absolute;left:0;top:0;width:100%;height:100%;display:block;overflow:visible;pointer-events:none;shape-rendering:geometricPrecision}
 .theme-toggle .tsw-k{transition:transform .35s ease}
 .theme-toggle .tsw-kt{transform:translateX(-60px)}
 .theme-toggle .tsw-kb{transform:translateX(60px)}
 .theme-toggle .tsw-ks{transform:translateX(60px)}
 .theme-toggle .tsw-km{transform:translateX(-65.5px)}
 html[data-theme=light] .theme-toggle .tsw-kt,html[data-theme=light] .theme-toggle .tsw-kb,html[data-theme=light] .theme-toggle .tsw-ks,html[data-theme=light] .theme-toggle .tsw-km{transform:translateX(0)}
-.theme-toggle .tsw-pl{fill:#fff;stroke:var(--ink);stroke-width:3.2}
-.theme-toggle .tsw-pd{fill:var(--ink);stroke:rgba(255,255,255,.42);stroke-width:3.2}
+.theme-toggle .tsw-pl{fill:#fff;stroke:var(--ink);stroke-width:4.2}
+.theme-toggle .tsw-pd{fill:var(--ink);stroke:rgba(255,255,255,.7);stroke-width:4.2}
 html[data-theme=light] .theme-toggle .tsw-pd{stroke:var(--ink)}
 .theme-toggle .tsw-kl{fill:var(--ink)}
 .theme-toggle .tsw-kd{fill:#fff}
 .theme-toggle .tsw-sun circle{fill:var(--sun)}
-.theme-toggle .tsw-sun line{stroke:var(--sun);stroke-width:3;stroke-linecap:round}
+.theme-toggle .tsw-sun line{stroke:var(--sun);stroke-width:4.2;stroke-linecap:round}
 .theme-toggle .tsw-moon{fill:var(--sun)}
 </style>
 <style id="gsNavCss">
@@ -78,6 +78,24 @@ html.ios-standalone[data-theme=light] .ios-top-strip-g{background-color:#e4e9f3}
 html.ios-standalone.tp-open .ios-top-strip-g{background-color:#020408}
 html.ios-standalone.tp-open[data-theme=light] .ios-top-strip-g{background-color:#f6f6f8}
 </style>
+<style id="noBounce">
+/* No rubber-band / pull on Home or any tile page. Whatever sits behind the page is painted the SAME colour as the page,
+   so even a residual bounce can never show a second (navy/ECG) background. Pure CSS + one tiny script, no assets. */
+html,body{overscroll-behavior:none}
+.body{overscroll-behavior:none}
+html.tp-open,html.tp-open body{background:#020408}
+html.tp-open[data-theme=light],html.tp-open[data-theme=light] body{background:#f6f6f8}
+</style>
+<script>
+/* Older iOS ignores overscroll-behavior: block a pull only when nothing under the finger can scroll further in that direction */
+(function(){var ly=0,lx=0,tg=null,on=false,de=document.documentElement;
+function sc(el,d){var o=getComputedStyle(el).overflowY;if(o!=="auto"&&o!=="scroll"&&o!=="overlay")return false;if(el.scrollHeight<=el.clientHeight+1)return false;return d>0?el.scrollTop>0:el.scrollTop+el.clientHeight<el.scrollHeight-1}
+document.addEventListener("touchstart",function(e){if(e.touches.length!==1){on=false;return}var t=e.touches[0];ly=t.clientY;lx=t.clientX;tg=e.target;on=true},{passive:true});
+document.addEventListener("touchmove",function(e){if(!on||e.touches.length!==1||!e.cancelable)return;var t=e.touches[0],dy=t.clientY-ly,dx=t.clientX-lx;ly=t.clientY;lx=t.clientX;if(!dy||Math.abs(dx)>Math.abs(dy))return;var d=dy>0?1:-1;
+for(var el=tg;el&&el.nodeType===1&&el!==de;el=el.parentElement){if(sc(el,d))return}
+var r=document.scrollingElement||de;if(r.scrollHeight>r.clientHeight+1&&(d>0?r.scrollTop>0:r.scrollTop+r.clientHeight<r.scrollHeight-1))return;
+e.preventDefault()},{passive:false})})();
+</script>
 <style id="oldFonts">@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800;900&display=swap')
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap')
 @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,700;1,700&display=swap');</style>
@@ -557,7 +575,7 @@ html.ios-standalone.tp-open[data-theme=light] .ios-top-strip-g{background-color:
 </svg>
 <div class="topbar">
 <div class="wordmark" aria-label="iCU Calc"><span class="wm-icu">iCU</span><span class="wm-calc">Calc</span></div>
-<div class="theme-toggle" id="themeToggle" role="button" aria-label="Toggle theme"><svg class="tsw" viewBox="0 0 160 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><mask id="tswMoonMask" maskUnits="userSpaceOnUse" x="-30" y="-30" width="60" height="60"><rect x="-30" y="-30" width="60" height="60" fill="#fff"/><circle cx="10.5" cy="-2.5" r="15.5" fill="#000"/></mask></defs><g transform="translate(0 69.5)"><rect class="tsw-pl" x="22.6" y="22.6" width="114.8" height="47.8" rx="23.9"/><g class="tsw-k tsw-kt"><circle class="tsw-kl" cx="110" cy="46.5" r="20"/></g><g class="tsw-k tsw-ks"><g class="tsw-sun" transform="translate(50 46.5)"><circle r="9.5"/><g><line x1="13.0" y1="0.0" x2="17.0" y2="0.0"/><line x1="9.2" y1="9.2" x2="12.0" y2="12.0"/><line x1="0.0" y1="13.0" x2="0.0" y2="17.0"/><line x1="-9.2" y1="9.2" x2="-12.0" y2="12.0"/><line x1="-13.0" y1="0.0" x2="-17.0" y2="0.0"/><line x1="-9.2" y1="-9.2" x2="-12.0" y2="-12.0"/><line x1="-0.0" y1="-13.0" x2="-0.0" y2="-17.0"/><line x1="9.2" y1="-9.2" x2="12.0" y2="-12.0"/></g></g></g></g><g transform="translate(0 -69.5)"><rect class="tsw-pd" x="22.6" y="92.1" width="114.8" height="47.8" rx="23.9"/><g class="tsw-k tsw-kb"><circle class="tsw-kd" cx="50" cy="116" r="20"/></g><g class="tsw-k tsw-km"><g transform="translate(115.5 116)"><circle class="tsw-moon" r="14" mask="url(#tswMoonMask)"/></g></g></g></svg></div>
+<div class="theme-toggle" id="themeToggle" role="button" aria-label="Toggle theme"><svg class="tsw" viewBox="0 0 160 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0 69.5)"><rect class="tsw-pl" x="22.6" y="22.6" width="114.8" height="47.8" rx="23.9"/><g class="tsw-k tsw-kt"><circle class="tsw-kl" cx="110" cy="46.5" r="20"/></g><g class="tsw-k tsw-ks"><g class="tsw-sun" transform="translate(50 46.5)"><circle r="11.2"/><g><line x1="14.6" y1="0.0" x2="19.2" y2="0.0"/><line x1="10.3" y1="10.3" x2="13.6" y2="13.6"/><line x1="0.0" y1="14.6" x2="0.0" y2="19.2"/><line x1="-10.3" y1="10.3" x2="-13.6" y2="13.6"/><line x1="-14.6" y1="0.0" x2="-19.2" y2="0.0"/><line x1="-10.3" y1="-10.3" x2="-13.6" y2="-13.6"/><line x1="-0.0" y1="-14.6" x2="-0.0" y2="-19.2"/><line x1="10.3" y1="-10.3" x2="13.6" y2="-13.6"/></g></g></g></g><g transform="translate(0 -69.5)"><rect class="tsw-pd" x="22.6" y="92.1" width="114.8" height="47.8" rx="23.9"/><g class="tsw-k tsw-kb"><circle class="tsw-kd" cx="50" cy="116" r="20"/></g><g class="tsw-k tsw-km"><g transform="translate(115.5 116)"><path class="tsw-moon" d="M0.06 -15.60A15.6 15.6 0 1 0 7.12 13.88A17.3 17.3 0 0 1 0.06 -15.60Z"/></g></g></g></svg></div>
 </div>
 <div class="eyebrow">a quick decision supporting tool</div>
 <div class="hero-pop" id="heroPop" aria-hidden="true">
@@ -5634,7 +5652,7 @@ If the pH is normal but the patient is critically ill — <b>suspect a mixed dis
 </div>
 <div class="gl-sub-card" id="gls-aht">
 <div class="gl-sub-header" onclick="glToggle('aht')">
-<span class="gl-sub-header-txt"><span class="gl-sub-emoji" id="gls-aht-chevron"></span><span>Antihypertensives <span style="color:var(--text-faint);font-weight:400">— ICU Emergency Drugs</span></span></span>
+<span class="gl-sub-header-txt"><span class="gl-sub-emoji" id="gls-aht-chevron"></span><span>Antihypertensives</span></span>
 <button type="button" class="calc-pin" data-cid="gls-aht" onclick="event.stopPropagation(); toggleFavoriteCalc('gls-aht', this)" title="Pin to top" aria-label="Pin to top"><span class="calc-pin-icon">☆</span></button>
 </div>
 <div class="gl-sub-body" id="gls-aht-body">
